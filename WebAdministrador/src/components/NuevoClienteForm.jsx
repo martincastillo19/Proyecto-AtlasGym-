@@ -56,11 +56,9 @@ function NuevoClienteForm() {
         maxWidth: "400px",
         margin: "2rem auto",
         boxShadow: "0 0 10px rgba(0,0,0,0.5)",
-        textAlign: "center", // Aquí centramos el texto
-        fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
       }}
     >
-      <h2>Nuevo Cliente</h2>
+      <h2 style={{ textAlign: "center" }}>Nuevo Cliente</h2>
 
       <input
         type="text"
@@ -141,7 +139,6 @@ const inputStyle = {
   border: "1px solid #555",
   borderRadius: "5px",
   fontSize: "1rem",
-  textAlign: "center", // Centrar texto dentro de los inputs
 };
 
 export default NuevoClienteForm;
