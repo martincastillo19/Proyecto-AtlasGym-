@@ -46,102 +46,102 @@ function NuevoClienteForm() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
+    <div
       style={{
-        backgroundColor: "#1e1e1e",
-        color: "white",
-        padding: "2rem",
-        borderRadius: "10px",
-        maxWidth: "400px",
-        margin: "2rem auto",
-        boxShadow: "0 0 10px rgba(0,0,0,0.5)",
-        textAlign: "center", // Aquí centramos el texto
-        fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#121212", // opcional: fondo general
       }}
     >
-      <h2>Nuevo Cliente</h2>
-
-      <input
-        type="text"
-        name="nombre"
-        placeholder="Nombre"
-        value={formData.nombre}
-        onChange={handleChange}
-        required
-        style={inputStyle}
-      />
-      <input
-        type="text"
-        name="apellido"
-        placeholder="Apellido"
-        value={formData.apellido}
-        onChange={handleChange}
-        required
-        style={inputStyle}
-      />
-      <input
-        type="text"
-        name="rut"
-        placeholder="RUT (ej: 9-4)"
-        value={formData.rut}
-        onChange={handleChange}
-        required
-        style={inputStyle}
-      />
-      <input
-        type="email"
-        name="correo"
-        placeholder="Correo"
-        value={formData.correo}
-        onChange={handleChange}
-        required
-        style={inputStyle}
-      />
-      <input
-        type="text"
-        name="ultimoPago"
-        placeholder="Día de último pago (dd/mm/aa)"
-        value={formData.ultimoPago}
-        onChange={handleChange}
-        required
-        style={inputStyle}
-      />
-
-      <button
-        type="submit"
+      <form
+        onSubmit={handleSubmit}
         style={{
-          backgroundColor: "#444",
+          backgroundColor: "#1e1e1e",
           color: "white",
-          padding: "0.75rem 1.5rem",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontSize: "1rem",
-          marginTop: "1rem",
+          padding: "2rem",
+          borderRadius: "10px",
+          maxWidth: "400px",
           width: "100%",
-          transition: "background-color 0.3s",
+          boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+          textAlign: "center",
+          fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
         }}
-        onMouseOver={(e) => (e.target.style.backgroundColor = "#666")}
-        onMouseOut={(e) => (e.target.style.backgroundColor = "#444")}
       >
-        Ingresar Cliente
-      </button>
-    </form>
+        <h2>Nuevo Cliente</h2>
+
+        <input
+          type="text"
+          name="nombre"
+          placeholder="Nombre"
+          value={formData.nombre}
+          onChange={handleChange}
+          required
+          style={inputStyle}
+        />
+        <input
+          type="text"
+          name="apellido"
+          placeholder="Apellido"
+          value={formData.apellido}
+          onChange={handleChange}
+          required
+          style={inputStyle}
+        />
+        <input
+          type="text"
+          name="rut"
+          placeholder="RUT (sin puntos y con guión ej: 9-4)"
+          value={formData.rut}
+          onChange={handleChange}
+          required
+          style={inputStyle}
+        />
+        <input
+          type="email"
+          name="correo"
+          placeholder="Correo"
+          value={formData.correo}
+          onChange={handleChange}
+          required
+          style={inputStyle}
+        />
+
+        <button
+          type="submit"
+          style={{
+            backgroundColor: "#444",
+            color: "white",
+            padding: "0.75rem 0.75rem",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "1rem",
+            marginTop: "1rem",
+            width: "100%",
+            transition: "background-color 0.3s",
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#666")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#444")}
+        >
+          Ingresar Cliente
+        </button>
+      </form>
+    </div>
   );
 }
 
 const inputStyle = {
-  display: "block",
   width: "100%",
+  maxWidth: "370px",
   padding: "0.5rem",
-  marginBottom: "1rem",
+  margin: "0.5rem auto",
+  borderRadius: "5px",
+  border: "1px solid #666",
   backgroundColor: "#2a2a2a",
   color: "white",
-  border: "1px solid #555",
-  borderRadius: "5px",
-  fontSize: "1rem",
-  textAlign: "center", // Centrar texto dentro de los inputs
+  display: "block",
 };
 
 export default NuevoClienteForm;
