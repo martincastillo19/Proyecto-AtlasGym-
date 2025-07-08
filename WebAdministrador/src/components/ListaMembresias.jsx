@@ -67,7 +67,6 @@ function ListaMembresia() {
           borderRadius: "5px",
         }}
       >
-        {/* Encabezado tipo tabla */}
         <div
           style={{
             display: "grid",
