@@ -4,7 +4,7 @@ import NuevoClienteForm from "./components/NuevoClienteForm";
 function App() {
   return (
     <div>
-      <h1>Formulario de Clientes</h1>
+      <h1 style={{ textAlign: "center" }}>Formulario de Clientes</h1>
       <NuevoClienteForm />
     </div>
   );
