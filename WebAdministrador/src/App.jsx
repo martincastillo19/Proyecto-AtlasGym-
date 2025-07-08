@@ -5,6 +5,7 @@ function App() {
   return (
     <div>
       <h1>Formulario de Clientes</h1>
+
       <NuevoClienteForm />
     </div>
   );
