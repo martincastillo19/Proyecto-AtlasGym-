@@ -19,6 +19,16 @@ app.post("/clientes", (req, res) => {
   });
 });
 
+app.get("/clientes", (req, res) => {
+  fs.readFile("clientes.txt", "utf8", (err, data) => {
+    if (err) {
+      console.error("Error al leer:", err);
+      return res.status(500).send("Error al leer");
+    }
+    res.send(data);
+  });
+});
+
 app.listen(3000, () => {
   console.log("Servidor en http://localhost:3000");
 });
