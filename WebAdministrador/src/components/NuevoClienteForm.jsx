@@ -55,7 +55,6 @@ function NuevoClienteForm() {
       });
 
       if (response.ok) {
-        alert("Cliente guardado con éxito");
         setFormData({
           nombre: "",
           apellido: "",
@@ -135,7 +134,7 @@ function NuevoClienteForm() {
           }}
         >
           <p>
-            <strong>Fecha actual (último pago):</strong> {getFechaHoy()}
+            <strong>Fecha actual:</strong> {getFechaHoy()}
           </p>
           <p>
             <strong>Fecha de vencimiento:</strong> {getFechaVencimiento()}

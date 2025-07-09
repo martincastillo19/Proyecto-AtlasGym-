@@ -6,3 +6,5 @@ cliente1|cliente|2-2|cliente1@gmail.com|12/06/25
 cliente2|cliente|22222-2|cliente2@gmail.com|09/07/25
 alberto|huanca|121212-2|ahuanca@gmail.com|09/07/25
 benja|flores|12312321-2|bflores@gmail.com|09/07/25
+marcela|francino|12132344-2|jndfskjadsjkjasdkjjksajdsanjfd@gmail.com|09/07/25
+el |mish|1-8|elMish@gmail.com|09/07/25
