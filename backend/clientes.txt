@@ -1,5 +1,6 @@
-nero|cartoons|9-4|nero@gmail.com|22/02/2024
-jaime|castillo|11-1|jaimec@gmail.com|22/02/2024
-yazuska|Castillo|22-2|yazuc@gmailcom|02/01/2025
-benja|flores|33-3|bflores@gmail.com|22/02/2024
-pedro|castro|44-4|pcastro@gmail.com|01/12/1992
+nero|cartoons|9-4|nero@gmail.com
+jaime|castillo|11-1|jaimec@gmail.com
+yazuska|Castillo|22-2|yazuc@gmail.com
+benja|flores|33-3|bflores@gmail.com
+pedro|castro|44-4|pcastro@gmail.com
+Adiel|Espinoza|55-5|aespinoza@gmail.com

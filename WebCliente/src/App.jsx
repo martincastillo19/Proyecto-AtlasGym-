@@ -1,20 +1,15 @@
 import React, { useState } from "react";
-import NuevoClienteForm from "./components/NuevoClienteForm";
-import ListaMembresia from "./components/ListaMembresias";
+import ListaClientes from "./components/ListaClientes";
 
 function App() {
-  const [vista, setVista] = useState("membresias");
+  const [vista, setVista] = useState("Consulta");
 
   const renderContenido = () => {
     switch (vista) {
-      case "membresias":
-        return <ListaMembresia />;
-      case "registrar":
-        return <NuevoClienteForm />;
+      case "Consulta":
+        return <ListaClientes />;
       case "ejercicios":
-        return <h2 style={{ color: "white" }}>Administrar Ejercicios</h2>;
-      case "inventario":
-        return <h2 style={{ color: "white" }}>Inventario</h2>;
+        return <h2 style={{ color: "white" }}>Ver ejercicios</h2>;
       default:
         return <h2 style={{ color: "white" }}>Selecciona una opción</h2>;
     }
@@ -22,7 +17,11 @@ function App() {
 
   return (
     <div
-      style={{ display: "flex", height: "100vh", backgroundColor: "#121212" }}
+      style={{
+        display: "flex",
+        height: "100vh",
+        backgroundColor: "#121212",
+      }}
     >
       <div
         style={{
@@ -34,23 +33,11 @@ function App() {
           gap: "1rem",
         }}
       >
-        <button style={botonEstilo} onClick={() => setVista("membresias")}>
-          Lista de
-          <br />
-          membresías
-        </button>
-        <button style={botonEstilo} onClick={() => setVista("registrar")}>
-          Registrar
-          <br />
-          Usuario
+        <button style={botonEstilo} onClick={() => setVista("Consulta")}>
+          Consultar <br /> membresía
         </button>
         <button style={botonEstilo} onClick={() => setVista("ejercicios")}>
-          Administrar
-          <br />
-          Ejercicios
-        </button>
-        <button style={botonEstilo} onClick={() => setVista("inventario")}>
-          Inventario
+          Ver <br /> ejercicios
         </button>
       </div>
 
