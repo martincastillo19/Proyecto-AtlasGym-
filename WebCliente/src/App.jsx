@@ -1,17 +1,22 @@
 import React, { useState } from "react";
-import ListaClientes from "./components/ListaClientes";
+import NuevoClienteForm from "./components/NuevoClienteForm";
+import ListaMembresia from "./components/ListaMembresias";
 
 function App() {
-  const [vista, setVista] = useState("consulta");
+  const [vista, setVista] = useState("membresias");
 
   const renderContenido = () => {
     switch (vista) {
-      case "consulta":
-        return <ListaClientes />;
+      case "membresias":
+        return <ListaMembresia />;
+      case "registrar":
+        return <NuevoClienteForm />;
       case "ejercicios":
-        return <h2 style={{ color: "white" }}>Ejercicios</h2>;
+        return <h2 style={{ color: "white" }}>Administrar Ejercicios</h2>;
+      case "inventario":
+        return <h2 style={{ color: "white" }}>Inventario</h2>;
       default:
-        return <ListaClientes />;
+        return <h2 style={{ color: "white" }}>Selecciona una opción</h2>;
     }
   };
 
@@ -19,7 +24,6 @@ function App() {
     <div
       style={{ display: "flex", height: "100vh", backgroundColor: "#121212" }}
     >
-      {/* Sidebar */}
       <div
         style={{
           width: "220px",
@@ -30,28 +34,26 @@ function App() {
           gap: "1rem",
         }}
       >
-        <div>
-          <img
-            src="/assets/atlaslogo_blanco.png"
-            alt="Logo"
-            style={{
-              width: "100px", // o el tamaño que tú prefieras
-              display: "block",
-              margin: "0 auto",
-            }}
-          />
-        </div>
-        <button style={botonEstilo} onClick={() => setVista("consulta")}>
-          Consulta de
+        <button style={botonEstilo} onClick={() => setVista("membresias")}>
+          Lista de
           <br />
-          membresía
+          membresías
+        </button>
+        <button style={botonEstilo} onClick={() => setVista("registrar")}>
+          Registrar
+          <br />
+          Usuario
         </button>
         <button style={botonEstilo} onClick={() => setVista("ejercicios")}>
+          Administrar
+          <br />
           Ejercicios
+        </button>
+        <button style={botonEstilo} onClick={() => setVista("inventario")}>
+          Inventario
         </button>
       </div>
 
-      {/* Contenido */}
       <div style={{ flex: 1, padding: "2rem" }}>{renderContenido()}</div>
     </div>
   );

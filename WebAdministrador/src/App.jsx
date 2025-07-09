@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import NuevoClienteForm from "./components/NuevoClienteForm";
+import ListaMembresia from "./components/ListaMembresias";
 
 function App() {
   const [vista, setVista] = useState("membresias");
@@ -7,7 +8,7 @@ function App() {
   const renderContenido = () => {
     switch (vista) {
       case "membresias":
-        return <h2 style={{ color: "white" }}>Lista de membresías</h2>;
+        return <ListaMembresia />;
       case "registrar":
         return <NuevoClienteForm />;
       case "ejercicios":
@@ -23,7 +24,6 @@ function App() {
     <div
       style={{ display: "flex", height: "100vh", backgroundColor: "#121212" }}
     >
-      {/* Sidebar */}
       <div
         style={{
           width: "220px",
@@ -65,7 +65,6 @@ function App() {
         </button>
       </div>
 
-      {/* Contenido */}
       <div style={{ flex: 1, padding: "2rem" }}>{renderContenido()}</div>
     </div>
   );
