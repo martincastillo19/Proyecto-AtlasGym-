@@ -4,6 +4,16 @@ function ListaMembresia() {
   const [clientes, setClientes] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [mostrarSoloVencidos, setMostrarSoloVencidos] = useState(false);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [mostrarModal, setMostrarModal] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "auto"; // por si se desmonta
+    };
+  }, []);
 
   useEffect(() => {
     fetch("http://localhost:3000/clientes")
@@ -43,6 +53,11 @@ function ListaMembresia() {
     rojo: "#dc3545",
   };
 
+  const abrirModal = (cliente) => {
+    setClienteSeleccionado(cliente);
+    setMostrarModal(true);
+  };
+
   const clientesFiltrados = clientes.filter((c) => {
     const coincideTexto =
       c.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -61,12 +76,13 @@ function ListaMembresia() {
     <div
       style={{
         maxWidth: "1500px",
-        margin: "2rem auto",
+        margin: "0.05rem auto",
         backgroundColor: "#1e1e1e",
         padding: "1rem",
         borderRadius: "8px",
         color: "white",
         fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
+        height: "600px",
       }}
     >
       <h2 style={{ textAlign: "center" }}>Lista de Membresías</h2>
@@ -106,7 +122,7 @@ function ListaMembresia() {
 
       <div
         style={{
-          maxHeight: "400px",
+          maxHeight: "465px",
           overflowY: "auto",
           border: "1px solid #444",
           borderRadius: "5px",
@@ -136,6 +152,67 @@ function ListaMembresia() {
           <div></div>
           <div></div>
         </div>
+        {mostrarModal && clienteSeleccionado && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setMostrarModal(false)} // cerrar al hacer clic fuera
+          >
+            <div
+              style={{
+                background: "#1e1e1e",
+                padding: "2rem",
+                borderRadius: "10px",
+                color: "white",
+                minWidth: "300px",
+              }}
+              onClick={(e) => e.stopPropagation()} // evita cierre al hacer clic dentro
+            >
+              <h3>Editar Cliente</h3>
+              <p>
+                <strong>Nombre:</strong> {clienteSeleccionado.nombre}
+              </p>
+              <p>
+                <strong>Apellido:</strong> {clienteSeleccionado.apellido}
+              </p>
+              <p>
+                <strong>RUT:</strong> {clienteSeleccionado.rut}
+              </p>
+              <p>
+                <strong>Correo:</strong> {clienteSeleccionado.correo}
+              </p>
+              <p>
+                <strong>Último pago:</strong> {clienteSeleccionado.ultimoPago}
+              </p>
+
+              {/* Puedes reemplazar esto por formularios reales */}
+              <button
+                onClick={() => setMostrarModal(false)}
+                style={{
+                  marginTop: "1rem",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  padding: "0.5rem 1rem",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        )}
 
         {clientesFiltrados.length === 0 ? (
           <p style={{ padding: "1rem", textAlign: "center" }}>
@@ -189,11 +266,11 @@ function ListaMembresia() {
                     border: "none",
                     cursor: "pointer",
                   }}
-                  onClick={() => alert(`Ver detalles de ${cliente.nombre}`)}
+                  onClick={() => abrirModal(cliente)}
                 >
                   <img
                     src="/assets/archivo.png"
-                    alt="Ver"
+                    alt="Editar"
                     style={{ width: "30px", height: "30px" }}
                   />
                 </button>
