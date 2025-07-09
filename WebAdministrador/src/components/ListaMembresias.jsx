@@ -34,6 +34,9 @@ function ListaMembresia() {
   const calcularEstado = (fecha) => {
     const [dia, mes, anio] = fecha.split("/").map((v) => parseInt(v));
     const fechaPago = new Date(2000 + anio, mes - 1, dia); // dd/mm/yy
+    const fechaVencimiento = new Date(fechaPago);
+    fechaVencimiento.setDate(fechaPago.getDate() + 30);
+
     const hoy = new Date();
     const diferenciaDias = Math.floor(
       (hoy - fechaPago) / (1000 * 60 * 60 * 24)
@@ -44,7 +47,14 @@ function ListaMembresia() {
     if (diasRestantes > 7) estado = "verde";
     else if (diasRestantes > 0) estado = "amarillo";
 
-    return { estado, diasRestantes: Math.max(diasRestantes, 0) };
+    const fechaVencimientoFormateada =
+      fechaVencimiento.toLocaleDateString("es-CL");
+
+    return {
+      estado,
+      diasRestantes: Math.max(diasRestantes, 0),
+      fechaVencimiento: fechaVencimientoFormateada,
+    };
   };
 
   const colorEstado = {
@@ -193,6 +203,13 @@ function ListaMembresia() {
               </p>
               <p>
                 <strong>Último pago:</strong> {clienteSeleccionado.ultimoPago}
+              </p>
+              <p>
+                <strong>Vence el:</strong>{" "}
+                {
+                  calcularEstado(clienteSeleccionado.ultimoPago)
+                    .fechaVencimiento
+                }
               </p>
 
               {/* Puedes reemplazar esto por formularios reales */}

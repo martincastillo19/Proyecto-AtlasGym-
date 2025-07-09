@@ -6,6 +6,13 @@ function ListaClientes() {
   const [resultado, setResultado] = useState(null);
 
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
     fetch("http://localhost:3000/clientes")
       .then((res) => res.text())
       .then((data) => {
@@ -13,13 +20,38 @@ function ListaClientes() {
           .split("\n")
           .filter((line) => line.trim() !== "")
           .map((line) => {
-            const [nombre, apellido, rut, correo] = line.split("|");
-            return { nombre, apellido, rut, correo };
+            const [nombre, apellido, rut, correo, ultimoPago] = line.split("|");
+            return { nombre, apellido, rut, correo, ultimoPago };
           });
         setClientes(arr);
       })
       .catch((err) => console.error("Error al obtener clientes:", err));
   }, []);
+
+  const calcularEstado = (fecha) => {
+    const [dia, mes, anio] = fecha.split("/").map((v) => parseInt(v));
+    const fechaPago = new Date(2000 + anio, mes - 1, dia);
+    const fechaVencimiento = new Date(fechaPago);
+    fechaVencimiento.setDate(fechaPago.getDate() + 30);
+
+    const hoy = new Date();
+    const diferenciaDias = Math.floor(
+      (hoy - fechaPago) / (1000 * 60 * 60 * 24)
+    );
+    const diasRestantes = 30 - diferenciaDias;
+
+    let estado = "rojo";
+    if (diasRestantes > 7) estado = "verde";
+    else if (diasRestantes > 0) estado = "amarillo";
+
+    const vencimientoFormateado = fechaVencimiento.toLocaleDateString("es-CL");
+
+    return {
+      estado,
+      diasRestantes: Math.max(diasRestantes, 0),
+      fechaVencimiento: vencimientoFormateado,
+    };
+  };
 
   const buscarCliente = () => {
     const busqueda = filtro.trim().toLowerCase();
@@ -36,7 +68,7 @@ function ListaClientes() {
 
   const inputStyle = {
     display: "block",
-    width: "100%",
+    width: "380px",
     padding: "0.5rem",
     marginBottom: "1rem",
     backgroundColor: "#2a2a2a",
@@ -82,10 +114,10 @@ function ListaClientes() {
 
   return (
     <div style={containerStyle}>
-      <h2>Buscar cliente por RUT o correo</h2>
+      <h2>Consultar estado membresía</h2>
       <input
         type="text"
-        placeholder="Ingrese RUT o correo"
+        placeholder="Ingrese RUT(sin puntos y con guión) o correo"
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
         style={inputStyle}
@@ -103,22 +135,64 @@ function ListaClientes() {
         <p style={{ fontWeight: "bold" }}>No se encontró cliente.</p>
       )}
 
-      {resultado && resultado !== "No encontrado" && (
-        <div style={resultadoStyle}>
-          <p>
-            <strong>Nombre:</strong> {resultado.nombre}
-          </p>
-          <p>
-            <strong>Apellido:</strong> {resultado.apellido}
-          </p>
-          <p>
-            <strong>RUT:</strong> {resultado.rut}
-          </p>
-          <p>
-            <strong>Correo:</strong> {resultado.correo}
-          </p>
-        </div>
-      )}
+      {resultado &&
+        resultado !== "No encontrado" &&
+        (() => {
+          const { estado, diasRestantes, fechaVencimiento } = calcularEstado(
+            resultado.ultimoPago
+          );
+
+          const colorMap = {
+            verde: "limegreen",
+            amarillo: "gold",
+            rojo: "red",
+          };
+
+          return (
+            <div style={resultadoStyle}>
+              <p>
+                <strong>Nombre:</strong> {resultado.nombre}
+              </p>
+              <p>
+                <strong>Apellido:</strong> {resultado.apellido}
+              </p>
+              <p>
+                <strong>RUT:</strong> {resultado.rut}
+              </p>
+              <p>
+                <strong>Correo:</strong> {resultado.correo}
+              </p>
+              <p>
+                <strong>Último pago:</strong> {resultado.ultimoPago}
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center", // <-- centro horizontal
+                  gap: "0.5rem",
+                  marginTop: "0.5rem",
+                }}
+              >
+                {" "}
+                <strong>Estado:</strong>
+                <div
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    backgroundColor: colorMap[estado],
+                    borderRadius: "4px",
+                    border: "1px solid #999",
+                  }}
+                />
+                <span>{diasRestantes} días restantes</span>
+              </div>
+              <p style={{ marginTop: "0.5rem" }}>
+                <strong>Vence el:</strong> {fechaVencimiento}
+              </p>
+            </div>
+          );
+        })()}
     </div>
   );
 }

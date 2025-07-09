@@ -4,3 +4,5 @@ yazuska|Castillo|33-3|yazuc@gmail.com|12/06/25
 martin|castillo|21514824-6|martinc@gmail.com|09/07/25
 cliente1|cliente|2-2|cliente1@gmail.com|12/06/25
 cliente2|cliente|22222-2|cliente2@gmail.com|09/07/25
+alberto|huanca|121212-2|ahuanca@gmail.com|09/07/25
+benja|flores|12312321-2|bflores@gmail.com|09/07/25

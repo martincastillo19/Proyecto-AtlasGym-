@@ -6,8 +6,9 @@ function NuevoClienteForm() {
     apellido: "",
     rut: "",
     correo: "",
-    ultimoPago: "",
   });
+
+  const [mostrarFechas, setMostrarFechas] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -16,10 +17,35 @@ function NuevoClienteForm() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const getFechaHoy = () => {
+    const hoy = new Date();
+    const dia = String(hoy.getDate()).padStart(2, "0");
+    const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+    const anio = String(hoy.getFullYear()).slice(-2);
+    return `${dia}/${mes}/${anio}`;
+  };
 
-    const clienteString = `${formData.nombre}|${formData.apellido}|${formData.rut}|${formData.correo}|${formData.ultimoPago}`;
+  const getFechaVencimiento = () => {
+    const hoy = new Date();
+    hoy.setDate(hoy.getDate() + 30);
+    const dia = String(hoy.getDate()).padStart(2, "0");
+    const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+    const anio = String(hoy.getFullYear());
+    return `${dia}/${mes}/${anio}`;
+  };
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    setMostrarFechas(true);
+  };
+
+  const handleCancelar = () => {
+    setMostrarFechas(false);
+  };
+
+  const handleConfirmar = async () => {
+    const fechaHoy = getFechaHoy();
+    const clienteString = `${formData.nombre}|${formData.apellido}|${formData.rut}|${formData.correo}|${fechaHoy}`;
 
     try {
       const response = await fetch("http://localhost:3000/clientes", {
@@ -35,8 +61,8 @@ function NuevoClienteForm() {
           apellido: "",
           rut: "",
           correo: "",
-          ultimoPago: "",
         });
+        setMostrarFechas(false);
       } else {
         alert("Error al guardar el cliente");
       }
@@ -47,7 +73,7 @@ function NuevoClienteForm() {
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(e) => e.preventDefault()}
       style={{
         backgroundColor: "#1e1e1e",
         color: "white",
@@ -96,42 +122,94 @@ function NuevoClienteForm() {
         required
         style={inputStyle}
       />
-      <input
-        type="text"
-        name="ultimoPago"
-        placeholder="Día de último pago (dd/mm/aa)"
-        value={formData.ultimoPago}
-        onChange={handleChange}
-        required
-        style={inputStyle}
-      />
 
-      <button
-        type="submit"
-        style={{
-          backgroundColor: "#444",
-          color: "white",
-          padding: "0.75rem 1.5rem",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontSize: "1rem",
-          marginTop: "1rem",
-          width: "100%",
-          transition: "background-color 0.3s",
-        }}
-        onMouseOver={(e) => (e.target.style.backgroundColor = "#666")}
-        onMouseOut={(e) => (e.target.style.backgroundColor = "#444")}
-      >
-        Ingresar Cliente
-      </button>
+      {mostrarFechas && (
+        <div
+          style={{
+            marginTop: "1rem",
+            marginBottom: "1rem",
+            textAlign: "center",
+            border: "1px solid #555",
+            padding: "0.5rem",
+            borderRadius: "6px",
+          }}
+        >
+          <p>
+            <strong>Fecha actual (último pago):</strong> {getFechaHoy()}
+          </p>
+          <p>
+            <strong>Fecha de vencimiento:</strong> {getFechaVencimiento()}
+          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              justifyContent: "center",
+              marginTop: "1rem",
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleConfirmar}
+              style={{
+                backgroundColor: "#28a745",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Confirmar e Ingresar
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelar}
+              style={{
+                backgroundColor: "#dc3545",
+                color: "white",
+                padding: "0.5rem 1rem",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontWeight: "bold",
+              }}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!mostrarFechas && (
+        <button
+          type="button"
+          onClick={handleClick}
+          style={{
+            backgroundColor: "#444",
+            color: "white",
+            padding: "0.75rem 1.5rem",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "1rem",
+            width: "100%",
+            transition: "background-color 0.3s",
+          }}
+          onMouseOver={(e) => (e.target.style.backgroundColor = "#666")}
+          onMouseOut={(e) => (e.target.style.backgroundColor = "#444")}
+        >
+          Ingresar Cliente
+        </button>
+      )}
     </form>
   );
 }
 
 const inputStyle = {
   display: "block",
-  width: "100%",
+  width: "380px",
   padding: "0.5rem",
   marginBottom: "1rem",
   backgroundColor: "#2a2a2a",
