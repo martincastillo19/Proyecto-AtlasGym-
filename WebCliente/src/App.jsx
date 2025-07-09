@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import NuevoClienteForm from "./components/NuevoClienteForm";
-import ListaMembresia from "./components/ListaMembresias";
+
+import ListaClientes from "./components/ListaClientes";
 
 function App() {
   const [vista, setVista] = useState("membresias");
@@ -8,15 +8,10 @@ function App() {
   const renderContenido = () => {
     switch (vista) {
       case "membresias":
-        return <ListaMembresia />;
-      case "registrar":
+        return <ListaClientes />;
+      case "":
         return <NuevoClienteForm />;
-      case "ejercicios":
-        return <h2 style={{ color: "white" }}>Administrar Ejercicios</h2>;
-      case "inventario":
-        return <h2 style={{ color: "white" }}>Inventario</h2>;
-      default:
-        return <h2 style={{ color: "white" }}>Selecciona una opción</h2>;
+      
     }
   };
 
