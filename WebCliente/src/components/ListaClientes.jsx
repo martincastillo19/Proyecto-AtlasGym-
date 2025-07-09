@@ -4,6 +4,13 @@ function ListaClientes() {
   const [clientes, setClientes] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [resultado, setResultado] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -27,6 +34,30 @@ function ListaClientes() {
       })
       .catch((err) => console.error("Error al obtener clientes:", err));
   }, []);
+
+  const validarRut = (rut) => {
+    rut = rut.replace(/\s+/g, "").toLowerCase();
+    const rutRegex = /^(\d{7,8})-([\dk])$/;
+    const match = rut.match(rutRegex);
+    if (!match) return false;
+
+    const cuerpo = match[1];
+    const dv = match[2];
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += parseInt(cuerpo[i]) * multiplo;
+      multiplo = multiplo === 7 ? 2 : multiplo + 1;
+    }
+
+    const dvEsperado = 11 - (suma % 11);
+    const dvCalculado =
+      dvEsperado === 11 ? "0" : dvEsperado === 10 ? "k" : dvEsperado.toString();
+
+    return dv === dvCalculado;
+  };
 
   const calcularEstado = (fecha) => {
     const [dia, mes, anio] = fecha.split("/").map((v) => parseInt(v));
@@ -59,23 +90,44 @@ function ListaClientes() {
       setResultado(null);
       return;
     }
+
+    if (!busqueda.includes("@")) {
+      if (!validarRut(busqueda)) {
+        setResultado("RUT inválido");
+        return;
+      }
+    }
+
     const encontrado = clientes.find(
       (c) =>
         c.rut.toLowerCase() === busqueda || c.correo.toLowerCase() === busqueda
     );
+
     setResultado(encontrado || "No encontrado");
+  };
+
+  const containerStyle = {
+    backgroundColor: "#1e1e1e",
+    color: "white",
+    padding: isMobile ? "1rem" : "2rem",
+    borderRadius: "10px",
+    maxWidth: isMobile ? "90%" : "400px",
+    margin: "2rem auto",
+    boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+    fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
+    textAlign: "center",
   };
 
   const inputStyle = {
     display: "block",
-    width: "380px",
+    width: "95.5%",
     padding: "0.5rem",
     marginBottom: "1rem",
     backgroundColor: "#2a2a2a",
     color: "white",
     border: "1px solid #555",
     borderRadius: "5px",
-    fontSize: "1rem",
+    fontSize: isMobile ? "0.9rem" : "1rem",
   };
 
   const buttonStyle = {
@@ -85,22 +137,10 @@ function ListaClientes() {
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-    fontSize: "1rem",
+    fontSize: isMobile ? "0.9rem" : "1rem",
     transition: "background-color 0.3s",
     marginBottom: "1rem",
     width: "100%",
-  };
-
-  const containerStyle = {
-    backgroundColor: "#1e1e1e",
-    color: "white",
-    padding: "2rem",
-    borderRadius: "10px",
-    maxWidth: "400px",
-    margin: "2rem auto",
-    boxShadow: "0 0 10px rgba(0,0,0,0.5)",
-    fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
-    textAlign: "center",
   };
 
   const resultadoStyle = {
@@ -110,14 +150,17 @@ function ListaClientes() {
     borderRadius: "8px",
     textAlign: "left",
     lineHeight: "1.5",
+    fontSize: isMobile ? "0.9rem" : "1rem",
   };
 
   return (
     <div style={containerStyle}>
-      <h2>Consultar estado membresía</h2>
+      <h2 style={{ fontSize: isMobile ? "1.2rem" : "1.5rem" }}>
+        Consultar estado membresía
+      </h2>
       <input
         type="text"
-        placeholder="Ingrese RUT(sin puntos y con guión) o correo"
+        placeholder="Ingrese RUT (sin puntos y con guión) o correo"
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
         style={inputStyle}
@@ -131,17 +174,22 @@ function ListaClientes() {
         Buscar
       </button>
 
+      {resultado === "RUT inválido" && (
+        <p style={{ fontWeight: "bold", color: "tomato" }}>
+          RUT inválido. Asegúrese de usar el formato correcto (12345678-k).
+        </p>
+      )}
+
       {resultado === "No encontrado" && (
         <p style={{ fontWeight: "bold" }}>No se encontró cliente.</p>
       )}
 
       {resultado &&
-        resultado !== "No encontrado" &&
+        typeof resultado === "object" &&
         (() => {
           const { estado, diasRestantes, fechaVencimiento } = calcularEstado(
             resultado.ultimoPago
           );
-
           const colorMap = {
             verde: "limegreen",
             amarillo: "gold",
@@ -169,12 +217,11 @@ function ListaClientes() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center", // <-- centro horizontal
+                  justifyContent: "center",
                   gap: "0.5rem",
                   marginTop: "0.5rem",
                 }}
               >
-                {" "}
                 <strong>Estado:</strong>
                 <div
                   style={{

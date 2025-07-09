@@ -29,6 +29,31 @@ app.get("/clientes", (req, res) => {
   });
 });
 
+app.post("/eliminar", (req, res) => {
+  const { rut } = req.body;
+  if (!rut) return res.status(400).send("RUT requerido");
+
+  fs.readFile("clientes.txt", "utf8", (err, data) => {
+    if (err) {
+      console.error("Error al leer archivo:", err);
+      return res.status(500).send("Error al leer archivo");
+    }
+
+    const lineas = data.split("\n").filter((line) => {
+      const partes = line.split("|");
+      return partes.length >= 3 && partes[2] !== rut;
+    });
+
+    fs.writeFile("clientes.txt", lineas.join("\n") + "\n", (err) => {
+      if (err) {
+        console.error("Error al escribir archivo:", err);
+        return res.status(500).send("Error al eliminar");
+      }
+      res.send("Cliente eliminado correctamente");
+    });
+  });
+});
+
 app.listen(3000, () => {
   console.log("Servidor en http://localhost:3000");
 });

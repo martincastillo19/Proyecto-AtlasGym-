@@ -9,12 +9,44 @@ function NuevoClienteForm() {
   });
 
   const [mostrarFechas, setMostrarFechas] = useState(false);
+  const [rutError, setRutError] = useState("");
+
+  const validarRut = (rut) => {
+    const valor = rut.replace(/\./g, "").replace(/-/g, "").toUpperCase();
+    if (!/^\d{7,8}[0-9K]$/.test(valor)) return false;
+
+    const cuerpo = valor.slice(0, -1);
+    const dv = valor.slice(-1);
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += parseInt(cuerpo.charAt(i), 10) * multiplo;
+      multiplo = multiplo === 7 ? 2 : multiplo + 1;
+    }
+
+    const dvEsperado = 11 - (suma % 11);
+    let dvFinal = "";
+
+    if (dvEsperado === 11) dvFinal = "0";
+    else if (dvEsperado === 10) dvFinal = "K";
+    else dvFinal = dvEsperado.toString();
+
+    return dvFinal === dv;
+  };
+
+  const esCorreoValido = (correo) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+  };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+    if (e.target.name === "rut") setRutError("");
   };
 
   const getFechaHoy = () => {
@@ -36,11 +68,26 @@ function NuevoClienteForm() {
 
   const handleClick = (e) => {
     e.preventDefault();
+
+    const rutValido =
+      formData.rut.toLowerCase() === "sin rut" ||
+      validarRut(formData.rut) ||
+      (esCorreoValido(formData.correo) &&
+        formData.rut.toLowerCase() === "sin rut");
+
+    if (!rutValido) {
+      setRutError(
+        'RUT inválido. Usa formato válido (ej: 12345678-9) o "sin rut" si no tiene.'
+      );
+      return;
+    }
+
     setMostrarFechas(true);
   };
 
   const handleCancelar = () => {
     setMostrarFechas(false);
+    setRutError("");
   };
 
   const handleConfirmar = async () => {
@@ -62,6 +109,7 @@ function NuevoClienteForm() {
           correo: "",
         });
         setMostrarFechas(false);
+        setRutError("");
       } else {
         alert("Error al guardar el cliente");
       }
@@ -106,12 +154,17 @@ function NuevoClienteForm() {
       <input
         type="text"
         name="rut"
-        placeholder="RUT (ej: 9-4)"
+        placeholder='RUT (ej: 12345678-9 o "sin rut")'
         value={formData.rut}
         onChange={handleChange}
         required
         style={inputStyle}
       />
+      {rutError && (
+        <div style={{ color: "red", marginBottom: "1rem", fontSize: "0.9rem" }}>
+          {rutError}
+        </div>
+      )}
       <input
         type="email"
         name="correo"
