@@ -16,7 +16,7 @@ function App() {
       case "inventario":
         return <h2 style={{ color: "white" }}>Inventario</h2>;
       default:
-        return <h2 style={{ color: "white" }}>Selecciona una opción</h2>;
+        return <NuevoClienteForm />;
     }
   };
 
@@ -34,6 +34,17 @@ function App() {
           gap: "1rem",
         }}
       >
+        <div>
+          <img
+            src="/assets/atlaslogo_blanco.png"
+            alt="Logo"
+            style={{
+              width: "100px", // o el tamaño que tú prefieras
+              display: "block",
+              margin: "0 auto",
+            }}
+          />
+        </div>
         <button style={botonEstilo} onClick={() => setVista("membresias")}>
           Lista de
           <br />
