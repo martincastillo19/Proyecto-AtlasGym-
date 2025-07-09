@@ -33,6 +33,17 @@ function App() {
           gap: "1rem",
         }}
       >
+        <div>
+          <img
+            src="/assets/atlaslogo_blanco.png"
+            alt="Logo"
+            style={{
+              width: "100px", // o el tamaño que tú prefieras
+              display: "block",
+              margin: "0 auto",
+            }}
+          />
+        </div>
         <button style={botonEstilo} onClick={() => setVista("Consulta")}>
           Consultar <br /> membresía
         </button>
