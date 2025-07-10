@@ -13,13 +13,31 @@ function ListaClientes() {
           .split("\n")
           .filter((line) => line.trim() !== "")
           .map((line) => {
-            const [nombre, apellido, rut, correo] = line.split("|");
-            return { nombre, apellido, rut, correo };
+            const [nombre, apellido, rut, correo, ultimoPago] = line.split("|");
+            return { nombre, apellido, rut, correo, ultimoPago };
           });
         setClientes(arr);
       })
       .catch((err) => console.error("Error al obtener clientes:", err));
   }, []);
+
+  const calcularEstado = (fecha) => {
+    const [dia, mes, anio] = fecha.split("/").map((v) => parseInt(v));
+    const fechaPago = new Date(2000 + anio, mes - 1, dia);
+    const hoy = new Date();
+
+    const diferenciaDias = Math.floor(
+      (hoy - fechaPago) / (1000 * 60 * 60 * 24)
+    );
+
+    const diasRestantes = 30 - diferenciaDias;
+
+    let estado = "rojo";
+    if (diasRestantes > 7) estado = "verde";
+    else if (diasRestantes > 0) estado = "amarillo";
+
+    return { estado, diasRestantes: Math.max(diasRestantes, 0) };
+  };
 
   const buscarCliente = () => {
     const busqueda = filtro.trim().toLowerCase();
@@ -116,6 +134,13 @@ function ListaClientes() {
           </p>
           <p>
             <strong>Correo:</strong> {resultado.correo}
+          </p>
+          <p>
+            <strong>Último Pago:</strong> {resultado.ultimoPago}
+          </p>
+          <p>
+            <strong>Días restantes:</strong>{" "}
+            {calcularEstado(resultado.ultimoPago).diasRestantes}
           </p>
         </div>
       )}
