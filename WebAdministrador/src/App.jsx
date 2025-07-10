@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import NuevoClienteForm from "./components/NuevoClienteForm";
 import ListaMembresia from "./components/ListaMembresias";
+import Ejercicios from "./components/Ejercicios";
 
 function App() {
   const [vista, setVista] = useState("membresias");
@@ -12,7 +13,7 @@ function App() {
       case "registrar":
         return <NuevoClienteForm />;
       case "ejercicios":
-        return <h2 style={{ color: "white" }}>Administrar Ejercicios</h2>;
+        return <Ejercicios />;
       case "inventario":
         return <h2 style={{ color: "white" }}>Inventario</h2>;
       default:
@@ -22,7 +23,11 @@ function App() {
 
   return (
     <div
-      style={{ display: "flex", height: "100vh", backgroundColor: "#121212" }}
+      style={{
+        display: "flex",
+        height: "100vh",
+        backgroundColor: "#121212",
+      }}
     >
       <div
         style={{
@@ -39,7 +44,7 @@ function App() {
             src="/assets/atlaslogo_blanco.png"
             alt="Logo"
             style={{
-              width: "100px", // o el tamaño que tú prefieras
+              width: "100px",
               display: "block",
               margin: "0 auto",
             }}
