@@ -1,10 +1,2 @@
-Andres|Muñoz|18.456.123-K|andres.munoz@email.com|01/07/25
-Valentina|Reyes|21.789.456-2|valentina.reyes@email.com|20/05/25
-Matías|Pérez|19.234.567-3|matias.perez@email.com|08/07/25
-Fernanda|Rojas|17.123.789-6|fernanda.rojas@email.com|28/06/25
-Cristóbal|González|22.987.654-1|cristobal.gonzalez@email.com|09/07/25
-Sofía|Navarro|16.345.987-5|sofia.navarro@email.com|10/06/25
-Benjamín|López|15.876.543-8|benjamin.lopez@email.com|25/06/25
-Isidora|Martínez|14.765.321-7|isidora.martinez@email.com|03/07/25
-Tomás|Castillo|13.654.987-0|tomas.castillo@email.com|02/07/25
+Andres|Muñoz|10670834-7|andresmunoz@email.com|01/07/25
 Yazuska|Castillo|21697098-5|g@gmail.com|10/07/25

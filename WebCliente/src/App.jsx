@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ListaClientes from "./components/ListaClientes";
+import VerEjercicios from "./components/VerEjercicios";
 
 function App() {
   const [vista, setVista] = useState("Consulta");
@@ -18,7 +19,7 @@ function App() {
       case "Consulta":
         return <ListaClientes />;
       case "ejercicios":
-        return <h2 style={{ color: "white" }}>Ver ejercicios</h2>;
+        return <VerEjercicios />;
       default:
         return <h2 style={{ color: "white" }}>Selecciona una opción</h2>;
     }
@@ -29,7 +30,7 @@ function App() {
       style={{
         display: "flex",
         flexDirection: isMobile ? "column" : "row",
-        height: "100vh",
+        minHeight: "98vh",
         backgroundColor: "#121212",
       }}
     >
@@ -72,7 +73,16 @@ function App() {
         </button>
       </div>
 
-      <div style={{ flex: 1, padding: isMobile ? "1rem" : "2rem" }}>
+      <div
+        style={{
+          flex: 1,
+          padding: isMobile ? "1rem" : "2rem",
+          maxWidth: "900px",
+          margin: "0 auto",
+          maxHeight: "calc(100vh - 2rem)", // menos padding para no salirse
+          overflowY: "auto",
+        }}
+      >
         {renderContenido()}
       </div>
     </div>
