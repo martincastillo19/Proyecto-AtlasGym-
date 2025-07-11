@@ -105,6 +105,7 @@ function AdministracionEjercicios() {
       e.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
       e.zona.toLowerCase().includes(filtro.toLowerCase())
   );
+
   useEffect(() => {
     cargarEjercicios();
   }, []);
