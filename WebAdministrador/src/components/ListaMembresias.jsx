@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 
-// === COMPONENTE PRINCIPAL ===
 function ListaMembresia() {
   const [clientes, setClientes] = useState([]);
   const [filtro, setFiltro] = useState("");
@@ -11,10 +10,31 @@ function ListaMembresia() {
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [formEditar, setFormEditar] = useState(null);
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => (document.body.style.overflow = "auto");
-  }, []);
+  const colorEstado = {
+    verde: "#28a745",
+    amarillo: "#ffc107",
+    rojo: "#dc3545",
+  };
+
+  function calcularEstado(fecha) {
+    const [dia, mes, anio] = fecha.split("/").map(Number);
+    const fechaPago = new Date(2000 + anio, mes - 1, dia);
+    const hoy = new Date();
+    const diasRestantes =
+      30 - Math.floor((hoy - fechaPago) / (1000 * 60 * 60 * 24));
+    let estado =
+      diasRestantes > 7 ? "verde" : diasRestantes > 0 ? "amarillo" : "rojo";
+    return { estado, diasRestantes: Math.max(diasRestantes, 0) };
+  }
+
+  function formatearRut(value) {
+    let valor = value.replace(/[^0-9kK]/g, "").toUpperCase();
+    if (valor.length === 0) return "";
+    if (valor.length === 1) return valor;
+    const cuerpo = valor.slice(0, -1);
+    const dv = valor.slice(-1);
+    return cuerpo + "-" + dv;
+  }
 
   const cargarClientes = () => {
     fetch("http://localhost:3000/clientes")
@@ -31,10 +51,6 @@ function ListaMembresia() {
       })
       .catch((err) => console.error("Error al obtener clientes:", err));
   };
-
-  useEffect(() => {
-    cargarClientes();
-  }, []);
 
   const abrirModalEditar = (cliente) => {
     setClienteSeleccionado(cliente);
@@ -57,7 +73,6 @@ function ListaMembresia() {
   const guardarCambios = () => {
     if (!formEditar) return;
 
-    // ⚠ Validación LOCAL
     const rutNuevo = formEditar.rut.trim().toLowerCase();
     const correoNuevo = formEditar.correo.trim().toLowerCase();
 
@@ -66,7 +81,7 @@ function ListaMembresia() {
       clientes.some(
         (c) =>
           c.rut.trim().toLowerCase() === rutNuevo &&
-          c.correo !== clienteSeleccionado.correo // no soy yo mismo
+          c.correo !== clienteSeleccionado.correo
       );
 
     if (rutRepetido) {
@@ -83,7 +98,6 @@ function ListaMembresia() {
       return;
     }
 
-    // ✅ Si pasa validación local, envía al servidor
     fetch("http://localhost:3000/clientes/actualizar", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -144,6 +158,15 @@ function ListaMembresia() {
     const { diasRestantes } = calcularEstado(c.ultimoPago);
     return coincideTexto && (!mostrarSoloVencidos || diasRestantes === 0);
   });
+
+  useEffect(() => {
+    cargarClientes();
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => (document.body.style.overflow = "auto");
+  }, []);
 
   return (
     <div style={estilos.contenedor}>
@@ -451,32 +474,5 @@ const CampoModal = ({ label, value, onChange }) => (
     />
   </div>
 );
-
-// === FUNCIONES AUXILIARES ===
-const colorEstado = {
-  verde: "#28a745",
-  amarillo: "#ffc107",
-  rojo: "#dc3545",
-};
-
-function calcularEstado(fecha) {
-  const [dia, mes, anio] = fecha.split("/").map(Number);
-  const fechaPago = new Date(2000 + anio, mes - 1, dia);
-  const hoy = new Date();
-  const diasRestantes =
-    30 - Math.floor((hoy - fechaPago) / (1000 * 60 * 60 * 24));
-  let estado =
-    diasRestantes > 7 ? "verde" : diasRestantes > 0 ? "amarillo" : "rojo";
-  return { estado, diasRestantes: Math.max(diasRestantes, 0) };
-}
-
-function formatearRut(value) {
-  let valor = value.replace(/[^0-9kK]/g, "").toUpperCase();
-  if (valor.length === 0) return "";
-  if (valor.length === 1) return valor;
-  const cuerpo = valor.slice(0, -1);
-  const dv = valor.slice(-1);
-  return cuerpo + "-" + dv;
-}
 
 export default ListaMembresia;

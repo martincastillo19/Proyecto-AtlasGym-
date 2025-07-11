@@ -11,10 +11,6 @@ function AdministracionEjercicios() {
     linkvideo: "",
   });
 
-  useEffect(() => {
-    cargarEjercicios();
-  }, []);
-
   const cargarEjercicios = () => {
     fetch("http://localhost:3000/ejercicios")
       .then((res) => res.text())
@@ -104,56 +100,28 @@ function AdministracionEjercicios() {
       });
   };
 
-  // Filtrar ejercicios por nombre o zona
   const ejerciciosFiltrados = ejercicios.filter(
     (e) =>
       e.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
       e.zona.toLowerCase().includes(filtro.toLowerCase())
   );
+  useEffect(() => {
+    cargarEjercicios();
+  }, []);
 
   return (
-    <div
-      style={{
-        maxWidth: "900px",
-        margin: "1rem auto",
-        backgroundColor: "#1e1e1e",
-        padding: "1rem",
-        borderRadius: "8px",
-        color: "white",
-        fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
-        height: "700px",
-      }}
-    >
-      <h2 style={{ textAlign: "center" }}>Administración de Ejercicios</h2>
+    <div style={styles.container}>
+      <h2 style={styles.title}>Administración de Ejercicios</h2>
 
-      {/* Filtro */}
       <input
         type="text"
         placeholder="Buscar por nombre o zona..."
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "0.5rem",
-          borderRadius: "5px",
-          border: "1px solid #444",
-          marginBottom: "1rem",
-          fontSize: "1rem",
-          backgroundColor: "#2a2a2a",
-          color: "white",
-        }}
+        style={styles.filtro}
       />
 
-      {/* Agregar ejercicio */}
-      <div
-        style={{
-          marginBottom: "1rem",
-          display: "grid",
-          gridTemplateColumns: "2fr 2fr 3fr 100px",
-          gap: "0.5rem",
-          alignItems: "center",
-        }}
-      >
+      <div style={styles.agregarGrid}>
         <input
           type="text"
           placeholder="Nombre"
@@ -161,14 +129,7 @@ function AdministracionEjercicios() {
           onChange={(e) =>
             setNuevoEjercicio({ ...nuevoEjercicio, nombre: e.target.value })
           }
-          style={{
-            padding: "0.4rem",
-            borderRadius: "4px",
-            border: "1px solid #555",
-            backgroundColor: "#2a2a2a",
-            color: "white",
-            fontSize: "1rem",
-          }}
+          style={styles.input}
         />
         <input
           type="text"
@@ -177,69 +138,27 @@ function AdministracionEjercicios() {
           onChange={(e) =>
             setNuevoEjercicio({ ...nuevoEjercicio, zona: e.target.value })
           }
-          style={{
-            padding: "0.4rem",
-            borderRadius: "4px",
-            border: "1px solid #555",
-            backgroundColor: "#2a2a2a",
-            color: "white",
-            fontSize: "1rem",
-          }}
+          style={styles.input}
         />
         <input
           type="text"
           placeholder="Link Video"
           value={nuevoEjercicio.linkvideo}
           onChange={(e) =>
-            setNuevoEjercicio({ ...nuevoEjercicio, linkvideo: e.target.value })
+            setNuevoEjercicio({
+              ...nuevoEjercicio,
+              linkvideo: e.target.value,
+            })
           }
-          style={{
-            padding: "0.4rem",
-            borderRadius: "4px",
-            border: "1px solid #555",
-            backgroundColor: "#2a2a2a",
-            color: "white",
-            fontSize: "1rem",
-          }}
+          style={styles.input}
         />
-        <button
-          onClick={agregarEjercicio}
-          style={{
-            padding: "0.5rem",
-            backgroundColor: "#28a745",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
+        <button onClick={agregarEjercicio} style={styles.botonAgregar}>
           Agregar
         </button>
       </div>
 
-      {/* Tabla de ejercicios */}
-      <div
-        style={{
-          maxHeight: "520px",
-          overflowY: "auto",
-          border: "1px solid #444",
-          borderRadius: "5px",
-        }}
-      >
-        {/* Encabezado */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 2fr 3fr 80px 80px",
-            padding: "0.75rem 1rem",
-            fontWeight: "bold",
-            borderBottom: "1px solid #555",
-            backgroundColor: "#2a2a2a",
-            textAlign: "center",
-            alignItems: "center",
-          }}
-        >
+      <div style={styles.tabla}>
+        <div style={styles.encabezado}>
           <div>Nombre</div>
           <div>Zona</div>
           <div>Link Video</div>
@@ -247,7 +166,6 @@ function AdministracionEjercicios() {
           <div></div>
         </div>
 
-        {/* Filas */}
         {ejerciciosFiltrados.length === 0 ? (
           <p style={{ padding: "1rem", textAlign: "center" }}>
             No hay ejercicios que mostrar.
@@ -257,13 +175,8 @@ function AdministracionEjercicios() {
             <div
               key={index}
               style={{
-                display: "grid",
-                gridTemplateColumns: "2fr 2fr 3fr 80px 80px",
-                padding: "0.75rem 1rem",
+                ...styles.fila,
                 backgroundColor: index % 2 === 0 ? "#222" : "#1a1a1a",
-                borderBottom: "1px solid #444",
-                alignItems: "center",
-                textAlign: "center",
               }}
             >
               <div>{ejercicio.nombre}</div>
@@ -273,41 +186,31 @@ function AdministracionEjercicios() {
                   href={ejercicio.linkvideo}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: "#0af", textDecoration: "underline" }}
+                  style={styles.link}
                 >
                   Ver video
                 </a>
               </div>
-
               <button
                 onClick={() => abrirModal(ejercicio)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                style={styles.iconButton}
                 title="Modificar"
               >
                 <img
                   src="/assets/archivo.png"
-                  alt="Modificar"
-                  style={{ width: "30px", height: "30px" }}
+                  alt="Editar"
+                  style={styles.icon}
                 />
               </button>
-
               <button
                 onClick={() => eliminarEjercicio(ejercicio.nombre)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
+                style={styles.iconButton}
                 title="Eliminar"
               >
                 <img
                   src="/assets/basura.png"
                   alt="Eliminar"
-                  style={{ width: "30px", height: "30px" }}
+                  style={styles.icon}
                 />
               </button>
             </div>
@@ -315,155 +218,35 @@ function AdministracionEjercicios() {
         )}
       </div>
 
-      {/* Modal para editar */}
       {mostrarModal && ejercicioSeleccionado && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-          onClick={() => setMostrarModal(false)}
-        >
-          <div
-            style={{
-              background: "#1e1e1e",
-              padding: "2rem",
-              borderRadius: "10px",
-              color: "white",
-              minWidth: "320px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div style={styles.modalOverlay} onClick={() => setMostrarModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3>Editar Ejercicio</h3>
-
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.3rem",
-                  fontWeight: "bold",
-                }}
-              >
-                Nombre:
-              </label>
-              <input
-                type="text"
-                value={ejercicioSeleccionado.nombre}
-                onChange={(e) =>
-                  setEjercicioSeleccionado({
-                    ...ejercicioSeleccionado,
-                    nombre: e.target.value,
-                  })
-                }
-                style={{
-                  width: "100%",
-                  fontSize: "1.2rem",
-                  padding: "0.3rem",
-                  borderRadius: "4px",
-                  border: "1px solid #555",
-                  backgroundColor: "#2a2a2a",
-                  color: "white",
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.3rem",
-                  fontWeight: "bold",
-                }}
-              >
-                Zona:
-              </label>
-              <input
-                type="text"
-                value={ejercicioSeleccionado.zona}
-                onChange={(e) =>
-                  setEjercicioSeleccionado({
-                    ...ejercicioSeleccionado,
-                    zona: e.target.value,
-                  })
-                }
-                style={{
-                  width: "100%",
-                  fontSize: "1.2rem",
-                  padding: "0.3rem",
-                  borderRadius: "4px",
-                  border: "1px solid #555",
-                  backgroundColor: "#2a2a2a",
-                  color: "white",
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "0.3rem",
-                  fontWeight: "bold",
-                }}
-              >
-                Link video:
-              </label>
-              <input
-                type="text"
-                value={ejercicioSeleccionado.linkvideo}
-                onChange={(e) =>
-                  setEjercicioSeleccionado({
-                    ...ejercicioSeleccionado,
-                    linkvideo: e.target.value,
-                  })
-                }
-                style={{
-                  width: "100%",
-                  fontSize: "1.2rem",
-                  padding: "0.3rem",
-                  borderRadius: "4px",
-                  border: "1px solid #555",
-                  backgroundColor: "#2a2a2a",
-                  color: "white",
-                }}
-              />
-            </div>
-
-            <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
-              <button
-                onClick={guardarCambios}
-                style={{
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  padding: "0.5rem 1rem",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  flex: 1,
-                }}
-              >
+            {["nombre", "zona", "linkvideo"].map((campo) => (
+              <div style={{ marginBottom: "1rem" }} key={campo}>
+                <label style={styles.label}>
+                  {campo.charAt(0).toUpperCase() + campo.slice(1)}:
+                </label>
+                <input
+                  type="text"
+                  value={ejercicioSeleccionado[campo]}
+                  onChange={(e) =>
+                    setEjercicioSeleccionado({
+                      ...ejercicioSeleccionado,
+                      [campo]: e.target.value,
+                    })
+                  }
+                  style={styles.modalInput}
+                />
+              </div>
+            ))}
+            <div style={styles.modalBotones}>
+              <button onClick={guardarCambios} style={styles.botonVerde}>
                 Guardar
               </button>
-
               <button
                 onClick={() => setMostrarModal(false)}
-                style={{
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  padding: "0.5rem 1rem",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  flex: 1,
-                }}
+                style={styles.botonRojo}
               >
                 Cancelar
               </button>
@@ -476,3 +259,144 @@ function AdministracionEjercicios() {
 }
 
 export default AdministracionEjercicios;
+
+const styles = {
+  container: {
+    maxWidth: "900px",
+    margin: "1rem auto",
+    backgroundColor: "#1e1e1e",
+    padding: "1rem",
+    borderRadius: "8px",
+    color: "white",
+    fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
+    height: "700px",
+  },
+  title: { textAlign: "center" },
+  filtro: {
+    width: "100%",
+    padding: "0.5rem",
+    borderRadius: "5px",
+    border: "1px solid #444",
+    marginBottom: "1rem",
+    fontSize: "1rem",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+  },
+  agregarGrid: {
+    marginBottom: "1rem",
+    display: "grid",
+    gridTemplateColumns: "2fr 2fr 3fr 100px",
+    gap: "0.5rem",
+    alignItems: "center",
+  },
+  input: {
+    padding: "0.4rem",
+    borderRadius: "4px",
+    border: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+    fontSize: "1rem",
+  },
+  botonAgregar: {
+    padding: "0.5rem",
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  },
+  tabla: {
+    maxHeight: "520px",
+    overflowY: "auto",
+    border: "1px solid #444",
+    borderRadius: "5px",
+  },
+  encabezado: {
+    display: "grid",
+    gridTemplateColumns: "2fr 2fr 3fr 80px 80px",
+    padding: "0.75rem 1rem",
+    fontWeight: "bold",
+    borderBottom: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+    textAlign: "center",
+    alignItems: "center",
+  },
+  fila: {
+    display: "grid",
+    gridTemplateColumns: "2fr 2fr 3fr 80px 80px",
+    padding: "0.75rem 1rem",
+    borderBottom: "1px solid #444",
+    alignItems: "center",
+    textAlign: "center",
+  },
+  iconButton: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+  },
+  icon: {
+    width: "30px",
+    height: "30px",
+  },
+  link: {
+    color: "#0af",
+    textDecoration: "underline",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  modal: {
+    background: "#1e1e1e",
+    padding: "2rem",
+    borderRadius: "10px",
+    color: "white",
+    minWidth: "400px",
+  },
+  label: {
+    display: "block",
+    marginBottom: "0.3rem",
+    fontWeight: "bold",
+  },
+  modalInput: {
+    width: "100%",
+    fontSize: "1.2rem",
+    padding: "0.3rem",
+    borderRadius: "4px",
+    border: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+  },
+  modalBotones: {
+    marginTop: "1rem",
+    display: "flex",
+    gap: "1rem",
+  },
+  botonVerde: {
+    backgroundColor: "#28a745",
+    color: "white",
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    flex: 1,
+  },
+  botonRojo: {
+    backgroundColor: "#dc3545",
+    color: "white",
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    flex: 1,
+  },
+};

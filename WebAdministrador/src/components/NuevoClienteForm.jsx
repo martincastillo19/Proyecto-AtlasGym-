@@ -119,19 +119,8 @@ function NuevoClienteForm() {
   };
 
   return (
-    <form
-      onSubmit={(e) => e.preventDefault()}
-      style={{
-        backgroundColor: "#1e1e1e",
-        color: "white",
-        padding: "2rem",
-        borderRadius: "10px",
-        maxWidth: "400px",
-        margin: "2rem auto",
-        boxShadow: "0 0 10px rgba(0,0,0,0.5)",
-      }}
-    >
-      <h2 style={{ textAlign: "center" }}>Nuevo Cliente</h2>
+    <form onSubmit={(e) => e.preventDefault()} style={formStyle}>
+      <h2 style={tituloStyle}>Nuevo Cliente</h2>
 
       <input
         type="text"
@@ -160,11 +149,7 @@ function NuevoClienteForm() {
         required
         style={inputStyle}
       />
-      {rutError && (
-        <div style={{ color: "red", marginBottom: "1rem", fontSize: "0.9rem" }}>
-          {rutError}
-        </div>
-      )}
+      {rutError && <div style={errorStyle}>{rutError}</div>}
       <input
         type="email"
         name="correo"
@@ -176,57 +161,25 @@ function NuevoClienteForm() {
       />
 
       {mostrarFechas && (
-        <div
-          style={{
-            marginTop: "1rem",
-            marginBottom: "1rem",
-            textAlign: "center",
-            border: "1px solid #555",
-            padding: "0.5rem",
-            borderRadius: "6px",
-          }}
-        >
+        <div style={fechasContainerStyle}>
           <p>
             <strong>Fecha actual:</strong> {getFechaHoy()}
           </p>
           <p>
             <strong>Fecha de vencimiento:</strong> {getFechaVencimiento()}
           </p>
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-              justifyContent: "center",
-              marginTop: "1rem",
-            }}
-          >
+          <div style={botonesContainerStyle}>
             <button
               type="button"
               onClick={handleConfirmar}
-              style={{
-                backgroundColor: "#28a745",
-                color: "white",
-                padding: "0.5rem 1rem",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
+              style={botonConfirmarStyle}
             >
               Confirmar e Ingresar
             </button>
             <button
               type="button"
               onClick={handleCancelar}
-              style={{
-                backgroundColor: "#dc3545",
-                color: "white",
-                padding: "0.5rem 1rem",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "bold",
-              }}
+              style={botonCancelarStyle}
             >
               Cancelar
             </button>
@@ -238,17 +191,7 @@ function NuevoClienteForm() {
         <button
           type="button"
           onClick={handleClick}
-          style={{
-            backgroundColor: "#444",
-            color: "white",
-            padding: "0.75rem 1.5rem",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "1rem",
-            width: "100%",
-            transition: "background-color 0.3s",
-          }}
+          style={botonIngresarStyle}
           onMouseOver={(e) => (e.target.style.backgroundColor = "#666")}
           onMouseOut={(e) => (e.target.style.backgroundColor = "#444")}
         >
@@ -258,6 +201,20 @@ function NuevoClienteForm() {
     </form>
   );
 }
+
+const formStyle = {
+  backgroundColor: "#1e1e1e",
+  color: "white",
+  padding: "2rem",
+  borderRadius: "10px",
+  maxWidth: "400px",
+  margin: "2rem auto",
+  boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+};
+
+const tituloStyle = {
+  textAlign: "center",
+};
 
 const inputStyle = {
   display: "block",
@@ -269,6 +226,60 @@ const inputStyle = {
   border: "1px solid #555",
   borderRadius: "5px",
   fontSize: "1rem",
+};
+
+const errorStyle = {
+  color: "red",
+  marginBottom: "1rem",
+  fontSize: "0.9rem",
+};
+
+const fechasContainerStyle = {
+  marginTop: "1rem",
+  marginBottom: "1rem",
+  textAlign: "center",
+  border: "1px solid #555",
+  padding: "0.5rem",
+  borderRadius: "6px",
+};
+
+const botonesContainerStyle = {
+  display: "flex",
+  gap: "1rem",
+  justifyContent: "center",
+  marginTop: "1rem",
+};
+
+const botonConfirmarStyle = {
+  backgroundColor: "#28a745",
+  color: "white",
+  padding: "0.5rem 1rem",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
+
+const botonCancelarStyle = {
+  backgroundColor: "#dc3545",
+  color: "white",
+  padding: "0.5rem 1rem",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontWeight: "bold",
+};
+
+const botonIngresarStyle = {
+  backgroundColor: "#444",
+  color: "white",
+  padding: "0.75rem 1.5rem",
+  border: "none",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "1rem",
+  width: "100%",
+  transition: "background-color 0.3s",
 };
 
 export default NuevoClienteForm;

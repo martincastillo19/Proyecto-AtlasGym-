@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-function ListaClientes() {
+function Consulta() {
   const [clientes, setClientes] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [resultado, setResultado] = useState(null);
@@ -244,4 +244,4 @@ function ListaClientes() {
   );
 }
 
-export default ListaClientes;
+export default Consulta;
