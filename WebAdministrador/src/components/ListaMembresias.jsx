@@ -5,7 +5,9 @@ function ListaMembresia() {
   const [filtro, setFiltro] = useState("");
   const [mostrarSoloVencidos, setMostrarSoloVencidos] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
-  const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
+  const [clienteEliminar, setClienteEliminar] = useState(null);
+  const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
 
   const inputStyle = {
     width: "100%",
@@ -31,7 +33,7 @@ function ListaMembresia() {
     return () => (document.body.style.overflow = "auto");
   }, []);
 
-  useEffect(() => {
+  const cargarClientes = () => {
     fetch("http://localhost:3000/clientes")
       .then((res) => res.text())
       .then((data) => {
@@ -45,6 +47,10 @@ function ListaMembresia() {
         setClientes(arr);
       })
       .catch((err) => console.error("Error al obtener clientes:", err));
+  };
+
+  useEffect(() => {
+    cargarClientes();
   }, []);
 
   const calcularEstado = (fecha) => {
@@ -58,9 +64,14 @@ function ListaMembresia() {
     return { estado, diasRestantes: Math.max(diasRestantes, 0) };
   };
 
-  const abrirModal = (cliente) => {
+  const abrirModalEditar = (cliente) => {
     setClienteSeleccionado(cliente);
-    setMostrarModal(true);
+    setMostrarModalEditar(true);
+  };
+
+  const abrirModalEliminar = (cliente) => {
+    setClienteEliminar(cliente);
+    setMostrarModalEliminar(true);
   };
 
   const actualizarCampo = (campo, valor) => {
@@ -76,7 +87,7 @@ function ListaMembresia() {
       .then((res) => res.json())
       .then(() => {
         alert("Cliente actualizado correctamente.");
-        setMostrarModal(false);
+        setMostrarModalEditar(false);
         setClientes((prev) =>
           prev.map((c) =>
             c.rut === clienteSeleccionado.rut ? clienteSeleccionado : c
@@ -86,6 +97,29 @@ function ListaMembresia() {
       .catch((err) => {
         console.error("Error al guardar cambios:", err);
         alert("Error al guardar.");
+      });
+  };
+
+  const confirmarEliminar = () => {
+    if (!clienteEliminar) return;
+
+    fetch("http://localhost:3000/clientes/eliminar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rut: clienteEliminar.rut }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al eliminar");
+        return res.text();
+      })
+      .then(() => {
+        cargarClientes();
+        setMostrarModalEliminar(false);
+        setClienteEliminar(null);
+      })
+      .catch((err) => {
+        alert("Error al eliminar cliente");
+        console.error(err);
       });
   };
 
@@ -177,7 +211,7 @@ function ListaMembresia() {
           <div></div>
         </div>
 
-        {mostrarModal && clienteSeleccionado && (
+        {mostrarModalEditar && clienteSeleccionado && (
           <div
             style={{
               position: "fixed",
@@ -191,7 +225,7 @@ function ListaMembresia() {
               alignItems: "center",
               zIndex: 1000,
             }}
-            onClick={() => setMostrarModal(false)}
+            onClick={() => setMostrarModalEditar(false)}
           >
             <div
               style={{
@@ -230,7 +264,7 @@ function ListaMembresia() {
                   Guardar
                 </button>
                 <button
-                  onClick={() => setMostrarModal(false)}
+                  onClick={() => setMostrarModalEditar(false)}
                   style={{
                     backgroundColor: "#dc3545",
                     color: "white",
@@ -239,6 +273,80 @@ function ListaMembresia() {
                     borderRadius: "5px",
                     cursor: "pointer",
                     flex: 1,
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {mostrarModalEliminar && clienteEliminar && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1100,
+            }}
+            onClick={() => setMostrarModalEliminar(false)}
+          >
+            <div
+              style={{
+                background: "#1e1e1e",
+                padding: "2rem",
+                borderRadius: "10px",
+                color: "white",
+                minWidth: "300px",
+                textAlign: "center",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p style={{ marginBottom: "1.5rem", fontSize: "1.1rem" }}>
+                ¿Está seguro de querer eliminar a{" "}
+                <strong>
+                  {clienteEliminar.nombre} {clienteEliminar.apellido}
+                </strong>
+                ?
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "1rem",
+                }}
+              >
+                <button
+                  onClick={confirmarEliminar}
+                  style={{
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    padding: "0.5rem 1.5rem",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Aceptar
+                </button>
+                <button
+                  onClick={() => setMostrarModalEliminar(false)}
+                  style={{
+                    backgroundColor: "#444",
+                    color: "white",
+                    padding: "0.5rem 1.5rem",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
                   }}
                 >
                   Cancelar
@@ -297,12 +405,12 @@ function ListaMembresia() {
                     border: "none",
                     cursor: "pointer",
                   }}
-                  onClick={() => abrirModal(cliente)}
+                  onClick={() => abrirModalEditar(cliente)}
                 >
                   <img
                     src="/assets/archivo.png"
                     alt="Editar"
-                    style={{ width: "30px", height: "30px" }}
+                    style={{ width: "30px" }}
                   />
                 </button>
                 <button
@@ -311,12 +419,12 @@ function ListaMembresia() {
                     border: "none",
                     cursor: "pointer",
                   }}
-                  onClick={() => alert(`Eliminar a ${cliente.nombre}`)}
+                  onClick={() => abrirModalEliminar(cliente)}
                 >
                   <img
                     src="/assets/basura.png"
                     alt="Eliminar"
-                    style={{ width: "30px", height: "30px" }}
+                    style={{ width: "30px" }}
                   />
                 </button>
               </div>
