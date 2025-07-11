@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import ListaClientes from "./components/ListaClientes";
+import Consulta from "./components/Consulta";
 import VerEjercicios from "./components/VerEjercicios";
 
 function App() {
@@ -17,7 +17,7 @@ function App() {
   const renderContenido = () => {
     switch (vista) {
       case "Consulta":
-        return <ListaClientes />;
+        return <Consulta />;
       case "ejercicios":
         return <VerEjercicios />;
       default:
