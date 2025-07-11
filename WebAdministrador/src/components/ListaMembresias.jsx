@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+// === COMPONENTE PRINCIPAL ===
 function ListaMembresia() {
   const [clientes, setClientes] = useState([]);
   const [filtro, setFiltro] = useState("");
@@ -8,25 +9,7 @@ function ListaMembresia() {
   const [mostrarModalEditar, setMostrarModalEditar] = useState(false);
   const [clienteEliminar, setClienteEliminar] = useState(null);
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
-
-  const inputStyle = {
-    width: "100%",
-    fontSize: "1.2rem",
-    padding: "0.3rem",
-    borderRadius: "4px",
-    border: "1px solid #555",
-    backgroundColor: "#2a2a2a",
-    color: "white",
-  };
-
-  const CampoModal = ({ label, value, onChange }) => (
-    <div
-      style={{ display: "flex", flexDirection: "column", marginBottom: "1rem" }}
-    >
-      <label style={{ marginBottom: "0.25rem" }}>{label}</label>
-      <input type="text" value={value} onChange={onChange} style={inputStyle} />
-    </div>
-  );
+  const [formEditar, setFormEditar] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -53,19 +36,9 @@ function ListaMembresia() {
     cargarClientes();
   }, []);
 
-  const calcularEstado = (fecha) => {
-    const [dia, mes, anio] = fecha.split("/").map(Number);
-    const fechaPago = new Date(2000 + anio, mes - 1, dia);
-    const hoy = new Date();
-    const diasRestantes =
-      30 - Math.floor((hoy - fechaPago) / (1000 * 60 * 60 * 24));
-    let estado =
-      diasRestantes > 7 ? "verde" : diasRestantes > 0 ? "amarillo" : "rojo";
-    return { estado, diasRestantes: Math.max(diasRestantes, 0) };
-  };
-
   const abrirModalEditar = (cliente) => {
     setClienteSeleccionado(cliente);
+    setFormEditar(cliente);
     setMostrarModalEditar(true);
   };
 
@@ -74,29 +47,70 @@ function ListaMembresia() {
     setMostrarModalEliminar(true);
   };
 
-  const actualizarCampo = (campo, valor) => {
-    setClienteSeleccionado((prev) => ({ ...prev, [campo]: valor }));
+  const handleChangeEditar = (campo, valor) => {
+    if (campo === "rut") {
+      valor = formatearRut(valor);
+    }
+    setFormEditar((prev) => ({ ...prev, [campo]: valor }));
   };
 
   const guardarCambios = () => {
+    if (!formEditar) return;
+
+    // ⚠ Validación LOCAL
+    const rutNuevo = formEditar.rut.trim().toLowerCase();
+    const correoNuevo = formEditar.correo.trim().toLowerCase();
+
+    const rutRepetido =
+      rutNuevo !== "sin rut" &&
+      clientes.some(
+        (c) =>
+          c.rut.trim().toLowerCase() === rutNuevo &&
+          c.correo !== clienteSeleccionado.correo // no soy yo mismo
+      );
+
+    if (rutRepetido) {
+      alert("Ya existe un cliente con ese RUT. Debes usar uno diferente.");
+      return;
+    }
+
+    const correoRepetido =
+      correoNuevo !== clienteSeleccionado.correo.toLowerCase() &&
+      clientes.some((c) => c.correo.trim().toLowerCase() === correoNuevo);
+
+    if (correoRepetido) {
+      alert("Ya existe un cliente con ese correo. Usa otro diferente.");
+      return;
+    }
+
+    // ✅ Si pasa validación local, envía al servidor
     fetch("http://localhost:3000/clientes/actualizar", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(clienteSeleccionado),
+      body: JSON.stringify({
+        ...formEditar,
+        correoOriginal: clienteSeleccionado.correo,
+      }),
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          return res.text().then((msg) => {
+            throw new Error(msg);
+          });
+        }
+        return res.json();
+      })
       .then(() => {
-        alert("Cliente actualizado correctamente.");
         setMostrarModalEditar(false);
         setClientes((prev) =>
           prev.map((c) =>
-            c.rut === clienteSeleccionado.rut ? clienteSeleccionado : c
+            c.correo === clienteSeleccionado.correo ? formEditar : c
           )
         );
       })
       .catch((err) => {
-        console.error("Error al guardar cambios:", err);
-        alert("Error al guardar.");
+        alert(err.message);
+        console.error("Error al guardar:", err);
       });
   };
 
@@ -106,7 +120,7 @@ function ListaMembresia() {
     fetch("http://localhost:3000/clientes/eliminar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rut: clienteEliminar.rut }),
+      body: JSON.stringify(clienteEliminar), // Se envían todos los datos
     })
       .then((res) => {
         if (!res.ok) throw new Error("Error al eliminar");
@@ -123,12 +137,6 @@ function ListaMembresia() {
       });
   };
 
-  const colorEstado = {
-    verde: "#28a745",
-    amarillo: "#ffc107",
-    rojo: "#dc3545",
-  };
-
   const clientesFiltrados = clientes.filter((c) => {
     const coincideTexto = [c.nombre, c.apellido, c.rut, c.correo].some(
       (campo) => campo.toLowerCase().includes(filtro.toLowerCase())
@@ -138,18 +146,7 @@ function ListaMembresia() {
   });
 
   return (
-    <div
-      style={{
-        maxWidth: "1500px",
-        margin: "0.05rem auto",
-        backgroundColor: "#1e1e1e",
-        padding: "1rem",
-        borderRadius: "8px",
-        color: "white",
-        fontFamily: "system-ui",
-        height: "600px",
-      }}
-    >
+    <div style={estilos.contenedor}>
       <h2 style={{ textAlign: "center" }}>Lista de Membresías</h2>
 
       <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
@@ -158,27 +155,11 @@ function ListaMembresia() {
           placeholder="Filtrar por cualquier campo"
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          style={{
-            flex: 1,
-            padding: "0.5rem",
-            borderRadius: "5px",
-            border: "1px solid #555",
-            backgroundColor: "#2a2a2a",
-            color: "white",
-            fontSize: "1rem",
-          }}
+          style={estilos.filtro}
         />
         <button
           onClick={() => setMostrarSoloVencidos((prev) => !prev)}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: mostrarSoloVencidos ? "#dc3545" : "#444",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
+          style={estilos.botonFiltro(mostrarSoloVencidos)}
         >
           {mostrarSoloVencidos ? "Mostrar Todos" : "Ver Vencidos"}
         </button>
@@ -192,16 +173,7 @@ function ListaMembresia() {
           borderRadius: "5px",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 80px 80px",
-            padding: "0.75rem 1rem",
-            fontWeight: "bold",
-            borderBottom: "1px solid #555",
-            backgroundColor: "#2a2a2a",
-          }}
-        >
+        <div style={estilos.encabezadoTabla}>
           <div>Nombre</div>
           <div>Apellido</div>
           <div>RUT</div>
@@ -211,7 +183,7 @@ function ListaMembresia() {
           <div></div>
         </div>
 
-        {mostrarModalEditar && clienteSeleccionado && (
+        {mostrarModalEditar && formEditar && (
           <div
             style={{
               position: "fixed",
@@ -233,7 +205,7 @@ function ListaMembresia() {
                 padding: "2rem",
                 borderRadius: "10px",
                 color: "white",
-                minWidth: "320px",
+                minWidth: "420px",
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -243,37 +215,21 @@ function ListaMembresia() {
                   <CampoModal
                     key={campo}
                     label={campo.charAt(0).toUpperCase() + campo.slice(1)}
-                    value={clienteSeleccionado[campo]}
-                    onChange={(e) => actualizarCampo(campo, e.target.value)}
+                    value={formEditar[campo]}
+                    onChange={(e) => handleChangeEditar(campo, e.target.value)}
                   />
                 )
               )}
               <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
                 <button
                   onClick={guardarCambios}
-                  style={{
-                    backgroundColor: "#28a745",
-                    color: "white",
-                    padding: "0.5rem 1rem",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    flex: 1,
-                  }}
+                  style={estilos.boton("#28a745")}
                 >
                   Guardar
                 </button>
                 <button
                   onClick={() => setMostrarModalEditar(false)}
-                  style={{
-                    backgroundColor: "#dc3545",
-                    color: "white",
-                    padding: "0.5rem 1rem",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    flex: 1,
-                  }}
+                  style={estilos.boton("#dc3545")}
                 >
                   Cancelar
                 </button>
@@ -284,29 +240,11 @@ function ListaMembresia() {
 
         {mostrarModalEliminar && clienteEliminar && (
           <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              backgroundColor: "rgba(0, 0, 0, 0.7)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 1100,
-            }}
+            style={{ ...estilos.modalOverlay, zIndex: 1100 }}
             onClick={() => setMostrarModalEliminar(false)}
           >
             <div
-              style={{
-                background: "#1e1e1e",
-                padding: "2rem",
-                borderRadius: "10px",
-                color: "white",
-                minWidth: "300px",
-                textAlign: "center",
-              }}
+              style={{ ...estilos.modalContenido, textAlign: "center" }}
               onClick={(e) => e.stopPropagation()}
             >
               <p style={{ marginBottom: "1.5rem", fontSize: "1.1rem" }}>
@@ -325,29 +263,13 @@ function ListaMembresia() {
               >
                 <button
                   onClick={confirmarEliminar}
-                  style={{
-                    backgroundColor: "#dc3545",
-                    color: "white",
-                    padding: "0.5rem 1.5rem",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                  }}
+                  style={estilos.boton("#dc3545")}
                 >
                   Aceptar
                 </button>
                 <button
                   onClick={() => setMostrarModalEliminar(false)}
-                  style={{
-                    backgroundColor: "#444",
-                    color: "white",
-                    padding: "0.5rem 1.5rem",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                  }}
+                  style={estilos.boton("#444")}
                 >
                   Cancelar
                 </button>
@@ -366,35 +288,13 @@ function ListaMembresia() {
               cliente.ultimoPago
             );
             return (
-              <div
-                key={index}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 80px 80px",
-                  padding: "0.75rem 1rem",
-                  backgroundColor: index % 2 === 0 ? "#222" : "#1a1a1a",
-                  borderBottom: "1px solid #444",
-                  alignItems: "center",
-                }}
-              >
+              <div key={index} style={estilos.fila(index)}>
                 <div>{cliente.nombre}</div>
                 <div>{cliente.apellido}</div>
                 <div>{cliente.rut}</div>
                 <div>{cliente.correo}</div>
                 <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    backgroundColor: colorEstado[estado],
-                    borderRadius: "4px",
-                    margin: "auto",
-                    color: "white",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    fontSize: "0.75rem",
-                    fontWeight: "bold",
-                  }}
+                  style={estilos.estadoBox(colorEstado[estado])}
                   title={`${diasRestantes} días restantes`}
                 >
                   {diasRestantes}
@@ -434,6 +334,149 @@ function ListaMembresia() {
       </div>
     </div>
   );
+}
+
+// === ESTILOS ===
+const estilos = {
+  contenedor: {
+    maxWidth: "1500px",
+    margin: "0.05rem auto",
+    backgroundColor: "#1e1e1e",
+    padding: "1rem",
+    borderRadius: "8px",
+    color: "white",
+    fontFamily: "system-ui",
+    height: "600px",
+  },
+  filtro: {
+    flex: 1,
+    padding: "0.5rem",
+    borderRadius: "5px",
+    border: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+    fontSize: "1rem",
+  },
+  botonFiltro: (activo) => ({
+    padding: "0.5rem 1rem",
+    backgroundColor: activo ? "#dc3545" : "#444",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    fontWeight: "bold",
+  }),
+  encabezadoTabla: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 80px 80px",
+    padding: "0.75rem 1rem",
+    fontWeight: "bold",
+    borderBottom: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+  },
+  fila: (index) => ({
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr 80px 80px",
+    padding: "0.75rem 1rem",
+    backgroundColor: index % 2 === 0 ? "#222" : "#1a1a1a",
+    borderBottom: "1px solid #444",
+    alignItems: "center",
+  }),
+  estadoBox: (color) => ({
+    width: "40px",
+    height: "40px",
+    backgroundColor: color,
+    borderRadius: "4px",
+    margin: "auto",
+    color: "white",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "0.75rem",
+    fontWeight: "bold",
+  }),
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  modalContenido: {
+    background: "#1e1e1e",
+    padding: "2rem",
+    borderRadius: "10px",
+    color: "white",
+    minWidth: "320px",
+  },
+  input: {
+    width: "100%",
+    fontSize: "1.2rem",
+    padding: "0.3rem",
+    borderRadius: "4px",
+    border: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+  },
+  campoModal: {
+    display: "flex",
+    flexDirection: "column",
+    marginBottom: "1rem",
+  },
+  boton: (color) => ({
+    backgroundColor: color,
+    color: "white",
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    flex: 1,
+  }),
+};
+
+// === COMPONENTES AUXILIARES ===
+const CampoModal = ({ label, value, onChange }) => (
+  <div style={estilos.campoModal}>
+    <label style={{ marginBottom: "0.25rem" }}>{label}</label>
+    <input
+      type="text"
+      value={value}
+      onChange={onChange}
+      style={estilos.input}
+    />
+  </div>
+);
+
+// === FUNCIONES AUXILIARES ===
+const colorEstado = {
+  verde: "#28a745",
+  amarillo: "#ffc107",
+  rojo: "#dc3545",
+};
+
+function calcularEstado(fecha) {
+  const [dia, mes, anio] = fecha.split("/").map(Number);
+  const fechaPago = new Date(2000 + anio, mes - 1, dia);
+  const hoy = new Date();
+  const diasRestantes =
+    30 - Math.floor((hoy - fechaPago) / (1000 * 60 * 60 * 24));
+  let estado =
+    diasRestantes > 7 ? "verde" : diasRestantes > 0 ? "amarillo" : "rojo";
+  return { estado, diasRestantes: Math.max(diasRestantes, 0) };
+}
+
+function formatearRut(value) {
+  let valor = value.replace(/[^0-9kK]/g, "").toUpperCase();
+  if (valor.length === 0) return "";
+  if (valor.length === 1) return valor;
+  const cuerpo = valor.slice(0, -1);
+  const dv = valor.slice(-1);
+  return cuerpo + "-" + dv;
 }
 
 export default ListaMembresia;

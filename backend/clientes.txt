@@ -1,1 +1,2 @@
-Yazuska|Castillo|21697098-5|g@gmail.com|10/07/25
+cliente1|cliente|sin rut|c1@gmail.com|10/07/25
+nero|cartoons|21514824-6|c2@gmail.com|10/07/25
