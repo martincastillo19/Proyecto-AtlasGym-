@@ -1,6 +1,8 @@
 const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -8,6 +10,16 @@ app.use(express.json());
 
 const CLIENTES_PATH = "./Clientes.txt";
 const EJERCICIOS_PATH = "./Ejercicios.txt";
+const UPLOADS_DIR = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
+});
+
+const upload = multer({ storage });
 
 // --- RUTAS CLIENTES ---
 
@@ -126,18 +138,24 @@ app.get("/ejercicios", (req, res) => {
   });
 });
 
-// Agregar ejercicio
-app.post("/ejercicios", (req, res) => {
-  const { data } = req.body;
-  if (!data) return res.status(400).send("Sin datos");
+// Agregar ejercicio (con archivo)
+app.post("/ejercicios/subir", upload.single("archivo"), (req, res) => {
+  const { nombre, zona } = req.body;
+  if (!nombre || !zona || !req.file)
+    return res.status(400).send("Faltan datos o archivo");
 
-  fs.appendFile(EJERCICIOS_PATH, data + "\n", (err) => {
-    if (err) return res.status(500).send("Error al guardar ejercicio.");
-    res.send("Ejercicio guardado correctamente.");
-  });
+  const rutaArchivo = "uploads/" + req.file.filename;
+  fs.appendFile(
+    EJERCICIOS_PATH,
+    `${nombre}|${zona}|${rutaArchivo}\n`,
+    (err) => {
+      if (err) return res.status(500).send("Error al guardar ejercicio.");
+      res.send("Ejercicio guardado correctamente.");
+    }
+  );
 });
 
-// Eliminar ejercicio por nombre
+// Eliminar ejercicio
 app.post("/ejercicios/eliminar", (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).send("Falta nombre");
@@ -145,11 +163,15 @@ app.post("/ejercicios/eliminar", (req, res) => {
   fs.readFile(EJERCICIOS_PATH, "utf8", (err, data) => {
     if (err) return res.status(500).send("Error al leer ejercicios.");
 
-    const lineas = data
-      .split("\n")
-      .filter(
-        (linea) => linea.trim() !== "" && !linea.startsWith(nombre + "|")
-      );
+    const lineas = data.split("\n").filter((linea) => {
+      if (linea.trim() === "") return false;
+      const [n, _, ruta] = linea.split("|");
+      if (n === nombre) {
+        if (fs.existsSync(ruta)) fs.unlinkSync(ruta);
+        return false;
+      }
+      return true;
+    });
 
     fs.writeFile(EJERCICIOS_PATH, lineas.join("\n") + "\n", (err) => {
       if (err) return res.status(500).send("Error al escribir ejercicios.");
@@ -158,21 +180,23 @@ app.post("/ejercicios/eliminar", (req, res) => {
   });
 });
 
-// Actualizar ejercicio
-app.put("/ejercicios/actualizar", (req, res) => {
-  const ejercicioActualizado = req.body;
+// Actualizar ejercicio (puede tener nuevo archivo)
+app.put("/ejercicios/actualizar", upload.single("archivo"), (req, res) => {
+  const { nombre, zona } = req.body;
+  if (!nombre || !zona) return res.status(400).send("Faltan nombre o zona");
 
   fs.readFile(EJERCICIOS_PATH, "utf8", (err, data) => {
     if (err) return res.status(500).send("Error leyendo ejercicios.");
 
     const lineas = data.split("\n").filter((line) => line.trim() !== "");
     let encontrado = false;
-
-    const nuevasLineas = lineas.map((linea) => {
-      const [nombre] = linea.split("|");
-      if (nombre === ejercicioActualizado.nombre) {
+    let nuevasLineas = lineas.map((linea) => {
+      const [n, z, ruta] = linea.split("|");
+      if (n === nombre) {
         encontrado = true;
-        return `${ejercicioActualizado.nombre}|${ejercicioActualizado.zona}|${ejercicioActualizado.link}`;
+        if (req.file && fs.existsSync(ruta)) fs.unlinkSync(ruta); // Eliminar anterior si nuevo
+        const nuevaRuta = req.file ? "uploads/" + req.file.filename : ruta;
+        return `${nombre}|${zona}|${nuevaRuta}`;
       }
       return linea;
     });
@@ -181,12 +205,14 @@ app.put("/ejercicios/actualizar", (req, res) => {
 
     fs.writeFile(EJERCICIOS_PATH, nuevasLineas.join("\n") + "\n", (err) => {
       if (err) return res.status(500).send("Error escribiendo ejercicios.");
-      res.json({ ok: true, mensaje: "Ejercicio actualizado correctamente." });
+      res.send("Ejercicio actualizado correctamente.");
     });
   });
 });
 
-// Iniciar servidor
+// Servir archivos estáticos (para poder acceder a los videos desde frontend)
+app.use("/uploads", express.static(UPLOADS_DIR));
+
 app.listen(3000, () =>
   console.log("Servidor corriendo en http://localhost:3000")
 );
