@@ -121,45 +121,47 @@ function NuevoClienteForm() {
   return (
     <form onSubmit={(e) => e.preventDefault()} style={formStyle}>
       <h2 style={tituloStyle}>Nuevo Cliente</h2>
-
+      Nombre
       <input
         type="text"
         name="nombre"
-        placeholder="Nombre"
+        placeholder="ej: Juan"
         value={formData.nombre}
         onChange={handleChange}
         required
         style={inputStyle}
       />
+      Apellido
       <input
         type="text"
         name="apellido"
-        placeholder="Apellido"
+        placeholder="ej: Pérez"
         value={formData.apellido}
         onChange={handleChange}
         required
         style={inputStyle}
       />
+      RUT
       <input
         type="text"
         name="rut"
-        placeholder='RUT (ej: 12345678-9 o "sin rut")'
+        placeholder='ej: 12345678-9 o "sin rut"'
         value={formData.rut}
         onChange={handleChange}
         required
         style={inputStyle}
       />
       {rutError && <div style={errorStyle}>{rutError}</div>}
+      Correo
       <input
         type="email"
         name="correo"
-        placeholder="Correo"
+        placeholder="ej: juan.perez@correo.com"
         value={formData.correo}
         onChange={handleChange}
         required
         style={inputStyle}
       />
-
       {mostrarFechas && (
         <div style={fechasContainerStyle}>
           <p>
@@ -186,7 +188,6 @@ function NuevoClienteForm() {
           </div>
         </div>
       )}
-
       {!mostrarFechas && (
         <button
           type="button"
