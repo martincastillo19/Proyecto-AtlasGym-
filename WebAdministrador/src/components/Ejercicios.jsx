@@ -41,7 +41,7 @@ function AdministracionEjercicios() {
   const abrirModal = (ejercicio) => {
     setEjercicioSeleccionado({
       ...ejercicio,
-      nombreOriginal: ejercicio.nombre, // para conservar el nombre original
+      nombreOriginal: ejercicio.nombre, // ← esto es clave
       nuevoArchivo: null,
     });
     setMostrarModal(true);
@@ -122,6 +122,7 @@ function AdministracionEjercicios() {
         alert("Error al agregar.");
       });
   };
+
   // Filtra los ejercicios según el texto ingresado
   const ejerciciosFiltrados = ejercicios.filter(
     (e) =>
