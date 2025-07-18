@@ -1,1 +1,2 @@
-Kyara|Ordoñez|21520483-9|kyara@gmail.com|09/07/25
+cliente1|cliente|sin rut|c1@gmail.com|10/07/25
+nero|cartoons|21514824-6|c2@gmail.com|10/07/25

@@ -1,39 +1,10 @@
 import { useEffect, useState } from "react";
 
-function ListaClientes() {
+function Consulta() {
   const [clientes, setClientes] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [resultado, setResultado] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
-
-  useEffect(() => {
-    fetch("http://localhost:3000/clientes")
-      .then((res) => res.text())
-      .then((data) => {
-        const arr = data
-          .split("\n")
-          .filter((line) => line.trim() !== "")
-          .map((line) => {
-            const [nombre, apellido, rut, correo, ultimoPago] = line.split("|");
-            return { nombre, apellido, rut, correo, ultimoPago };
-          });
-        setClientes(arr);
-      })
-      .catch((err) => console.error("Error al obtener clientes:", err));
-  }, []);
 
   const validarRut = (rut) => {
     rut = rut.replace(/\s+/g, "").toLowerCase();
@@ -117,7 +88,34 @@ function ListaClientes() {
     fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
     textAlign: "center",
   };
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/clientes")
+      .then((res) => res.text())
+      .then((data) => {
+        const arr = data
+          .split("\n")
+          .filter((line) => line.trim() !== "")
+          .map((line) => {
+            const [nombre, apellido, rut, correo, ultimoPago] = line.split("|");
+            return { nombre, apellido, rut, correo, ultimoPago };
+          });
+        setClientes(arr);
+      })
+      .catch((err) => console.error("Error al obtener clientes:", err));
+  }, []);
   const inputStyle = {
     display: "block",
     width: "95.5%",
@@ -244,4 +242,4 @@ function ListaClientes() {
   );
 }
 
-export default ListaClientes;
+export default Consulta;
