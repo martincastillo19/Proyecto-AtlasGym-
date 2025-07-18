@@ -1,2 +1,1 @@
-cliente1|cliente|sin rut|c1@gmail.com|10/07/25
-nero|cartoons|21514824-6|c2@gmail.com|10/07/25
+nero2|cartoons|21514824-6|nero@gmail.com|16/07/25

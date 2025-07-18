@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 function AdministracionEjercicios() {
+  // Estados para manejar ejercicios, modal, filtro y nuevo ejercicio
   const [ejercicios, setEjercicios] = useState([]);
   const [ejercicioSeleccionado, setEjercicioSeleccionado] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -8,9 +9,18 @@ function AdministracionEjercicios() {
   const [nuevoEjercicio, setNuevoEjercicio] = useState({
     nombre: "",
     zona: "",
-    linkvideo: "",
+    archivo: null,
   });
+  const inputArchivoRef = useRef(null);
+  const [videoSeleccionado, setVideoSeleccionado] = useState(null);
 
+  // Efecto para bloquear el scroll del body cuando se muestra un modal
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => (document.body.style.overflow = "auto");
+  }, []);
+
+  // Carga los ejercicios desde el backend
   const cargarEjercicios = () => {
     fetch("http://localhost:3000/ejercicios")
       .then((res) => res.text())
@@ -27,28 +37,37 @@ function AdministracionEjercicios() {
       .catch((err) => console.error("Error al obtener ejercicios:", err));
   };
 
+  // Abre el modal para editar un ejercicio
   const abrirModal = (ejercicio) => {
-    setEjercicioSeleccionado(ejercicio);
+    setEjercicioSeleccionado({
+      ...ejercicio,
+      nombreOriginal: ejercicio.nombre, // para conservar el nombre original
+      nuevoArchivo: null,
+    });
     setMostrarModal(true);
   };
 
+  // Guarda los cambios realizados en un ejercicio
   const guardarCambios = () => {
+    const formData = new FormData();
+    formData.append("nombre", ejercicioSeleccionado.nombre);
+    formData.append("zona", ejercicioSeleccionado.zona);
+    formData.append(
+      "nombreOriginal",
+      ejercicioSeleccionado.nombreOriginal || ejercicioSeleccionado.nombre
+    );
+    if (ejercicioSeleccionado.nuevoArchivo) {
+      formData.append("archivo", ejercicioSeleccionado.nuevoArchivo);
+    }
+
     fetch("http://localhost:3000/ejercicios/actualizar", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ejercicioSeleccionado),
+      body: formData,
     })
-      .then((res) => res.json())
+      .then((res) => res.text())
       .then(() => {
-        alert("Ejercicio actualizado correctamente.");
         setMostrarModal(false);
-        setEjercicios((prev) =>
-          prev.map((e) =>
-            e.nombre === ejercicioSeleccionado.nombre
-              ? ejercicioSeleccionado
-              : e
-          )
-        );
+        cargarEjercicios();
       })
       .catch((err) => {
         console.error("Error al guardar cambios:", err);
@@ -56,6 +75,7 @@ function AdministracionEjercicios() {
       });
   };
 
+  // Elimina un ejercicio
   const eliminarEjercicio = (nombre) => {
     if (!window.confirm(`¿Eliminar ejercicio ${nombre}?`)) return;
 
@@ -66,8 +86,7 @@ function AdministracionEjercicios() {
     })
       .then((res) => res.text())
       .then(() => {
-        alert("Ejercicio eliminado");
-        setEjercicios((prev) => prev.filter((e) => e.nombre !== nombre));
+        cargarEjercicios();
       })
       .catch((err) => {
         console.error("Error al eliminar ejercicio:", err);
@@ -75,23 +94,27 @@ function AdministracionEjercicios() {
       });
   };
 
+  // Agrega un nuevo ejercicio
   const agregarEjercicio = () => {
-    const { nombre, zona, linkvideo } = nuevoEjercicio;
-    if (!nombre || !zona || !linkvideo) {
+    const { nombre, zona, archivo } = nuevoEjercicio;
+    if (!nombre || !zona || !archivo) {
       alert("Completa todos los campos para agregar un ejercicio.");
       return;
     }
 
-    const dataString = `${nombre}|${zona}|${linkvideo}`;
-    fetch("http://localhost:3000/ejercicios", {
+    const formData = new FormData();
+    formData.append("nombre", nombre);
+    formData.append("zona", zona);
+    formData.append("archivo", archivo);
+
+    fetch("http://localhost:3000/ejercicios/subir", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: dataString }),
+      body: formData,
     })
       .then((res) => res.text())
       .then(() => {
-        alert("Ejercicio agregado correctamente.");
-        setNuevoEjercicio({ nombre: "", zona: "", linkvideo: "" });
+        setNuevoEjercicio({ nombre: "", zona: "", archivo: null });
+        if (inputArchivoRef.current) inputArchivoRef.current.value = null; // ← limpia el input
         cargarEjercicios();
       })
       .catch((err) => {
@@ -99,7 +122,7 @@ function AdministracionEjercicios() {
         alert("Error al agregar.");
       });
   };
-
+  // Filtra los ejercicios según el texto ingresado
   const ejerciciosFiltrados = ejercicios.filter(
     (e) =>
       e.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -114,55 +137,24 @@ function AdministracionEjercicios() {
     <div style={styles.container}>
       <h2 style={styles.title}>Administración de Ejercicios</h2>
 
-      <input
-        type="text"
-        placeholder="Buscar por nombre o zona..."
-        value={filtro}
-        onChange={(e) => setFiltro(e.target.value)}
-        style={styles.filtro}
-      />
-
-      <div style={styles.agregarGrid}>
+      {/* Filtro de búsqueda */}
+      <div>
+        <p>Búsqueda por nombre o zona:</p>
         <input
           type="text"
-          placeholder="Nombre"
-          value={nuevoEjercicio.nombre}
-          onChange={(e) =>
-            setNuevoEjercicio({ ...nuevoEjercicio, nombre: e.target.value })
-          }
-          style={styles.input}
+          placeholder='ej: "sentadillas" o "piernas"'
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          style={styles.filtro}
         />
-        <input
-          type="text"
-          placeholder="Zona"
-          value={nuevoEjercicio.zona}
-          onChange={(e) =>
-            setNuevoEjercicio({ ...nuevoEjercicio, zona: e.target.value })
-          }
-          style={styles.input}
-        />
-        <input
-          type="text"
-          placeholder="Link Video"
-          value={nuevoEjercicio.linkvideo}
-          onChange={(e) =>
-            setNuevoEjercicio({
-              ...nuevoEjercicio,
-              linkvideo: e.target.value,
-            })
-          }
-          style={styles.input}
-        />
-        <button onClick={agregarEjercicio} style={styles.botonAgregar}>
-          Agregar
-        </button>
       </div>
 
+      {/* Tabla de ejercicios */}
       <div style={styles.tabla}>
         <div style={styles.encabezado}>
           <div>Nombre</div>
           <div>Zona</div>
-          <div>Link Video</div>
+          <div>Video</div>
           <div></div>
           <div></div>
         </div>
@@ -183,14 +175,12 @@ function AdministracionEjercicios() {
               <div>{ejercicio.nombre}</div>
               <div>{ejercicio.zona}</div>
               <div>
-                <a
-                  href={ejercicio.linkvideo}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={styles.link}
+                <button
+                  onClick={() => setVideoSeleccionado(ejercicio.linkvideo)}
+                  style={styles.fileButton}
                 >
                   Ver video
-                </a>
+                </button>
               </div>
               <button
                 onClick={() => abrirModal(ejercicio)}
@@ -219,12 +209,15 @@ function AdministracionEjercicios() {
         )}
       </div>
 
+      {/* Modal de edición */}
       {mostrarModal && ejercicioSeleccionado && (
         <div style={styles.modalOverlay} onClick={() => setMostrarModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3>Editar Ejercicio</h3>
-            {["nombre", "zona", "linkvideo"].map((campo) => (
-              <div style={{ marginBottom: "1rem" }} key={campo}>
+
+            {/* Campos nombre y zona */}
+            {["nombre", "zona"].map((campo) => (
+              <div key={campo} style={{ marginBottom: "1rem" }}>
                 <label style={styles.label}>
                   {campo.charAt(0).toUpperCase() + campo.slice(1)}:
                 </label>
@@ -241,6 +234,22 @@ function AdministracionEjercicios() {
                 />
               </div>
             ))}
+
+            {/* Archivo nuevo */}
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={styles.label}>Nuevo archivo (opcional):</label>
+              <input
+                type="file"
+                onChange={(e) =>
+                  setEjercicioSeleccionado({
+                    ...ejercicioSeleccionado,
+                    nuevoArchivo: e.target.files[0],
+                  })
+                }
+                style={styles.modalInput}
+              />
+            </div>
+
             <div style={styles.modalBotones}>
               <button onClick={guardarCambios} style={styles.botonVerde}>
                 Guardar
@@ -255,6 +264,76 @@ function AdministracionEjercicios() {
           </div>
         </div>
       )}
+
+      {/* Modal de video */}
+      {videoSeleccionado && (
+        <div
+          style={styles.modalOverlay}
+          onClick={() => setVideoSeleccionado(null)}
+        >
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3>Reproduciendo Video</h3>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "1rem",
+              }}
+            >
+              <video
+                src={`http://localhost:3000/${videoSeleccionado}`}
+                controls
+                style={{
+                  width: "360px",
+                  maxWidth: "100%",
+                  borderRadius: "5px",
+                }}
+              />
+              <button
+                onClick={() => setVideoSeleccionado(null)}
+                style={styles.botonRojo}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Agregar nuevo ejercicio */}
+      <p>Agregar un nuevo ejercicio:</p>
+      <div style={styles.agregarGrid}>
+        <input
+          type="text"
+          placeholder="ej: Press banca"
+          value={nuevoEjercicio.nombre}
+          onChange={(e) =>
+            setNuevoEjercicio({ ...nuevoEjercicio, nombre: e.target.value })
+          }
+          style={styles.input}
+        />
+        <input
+          type="text"
+          placeholder="ej: Pecho"
+          value={nuevoEjercicio.zona}
+          onChange={(e) =>
+            setNuevoEjercicio({ ...nuevoEjercicio, zona: e.target.value })
+          }
+          style={styles.input}
+        />
+        <input
+          type="file"
+          ref={inputArchivoRef}
+          onChange={(e) =>
+            setNuevoEjercicio({ ...nuevoEjercicio, archivo: e.target.files[0] })
+          }
+          style={styles.input_archivo}
+        />
+        <button onClick={agregarEjercicio} style={styles.botonAgregar}>
+          Agregar
+        </button>
+      </div>
     </div>
   );
 }
@@ -263,18 +342,18 @@ export default AdministracionEjercicios;
 
 const styles = {
   container: {
-    maxWidth: "900px",
+    maxWidth: "1150px",
     margin: "1rem auto",
     backgroundColor: "#1e1e1e",
     padding: "1rem",
     borderRadius: "8px",
     color: "white",
     fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
-    height: "700px",
+    height: "630px",
   },
   title: { textAlign: "center" },
   filtro: {
-    width: "100%",
+    width: "98.5%",
     padding: "0.5rem",
     borderRadius: "5px",
     border: "1px solid #444",
@@ -286,12 +365,22 @@ const styles = {
   agregarGrid: {
     marginBottom: "1rem",
     display: "grid",
-    gridTemplateColumns: "2fr 2fr 3fr 100px",
+    gridTemplateColumns: "2fr 2fr 3fr 2fr 100px",
     gap: "0.5rem",
     alignItems: "center",
   },
   input: {
-    padding: "0.4rem",
+    padding: "0.5rem",
+    minWidth: "311px",
+    borderRadius: "4px",
+    border: "1px solid #555",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+    fontSize: "1rem",
+  },
+  input_archivo: {
+    padding: "0.5rem",
+    minWidth: "370px",
     borderRadius: "4px",
     border: "1px solid #555",
     backgroundColor: "#2a2a2a",
@@ -308,7 +397,8 @@ const styles = {
     fontWeight: "bold",
   },
   tabla: {
-    maxHeight: "520px",
+    maxHeight: "340px",
+    height: "400px",
     overflowY: "auto",
     border: "1px solid #444",
     borderRadius: "5px",
@@ -340,9 +430,8 @@ const styles = {
     width: "30px",
     height: "30px",
   },
-  link: {
-    color: "#0af",
-    textDecoration: "underline",
+  fileButton: {
+    color: "rgba(108, 117, 216, 0.8)",
   },
   modalOverlay: {
     position: "fixed",

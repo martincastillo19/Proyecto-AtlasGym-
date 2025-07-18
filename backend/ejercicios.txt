@@ -1,14 +1,1 @@
-Sentadilla|Piernas|https://youtu.be/sentadilla
-Plancha|Abdominales|https://youtu.be/plancha
-Flexiones|Pecho|https://youtu.be/flexiones
-Peso Muerto|Espalda|https://youtu.be/pesomuerto
-Curl de Bíceps|Brazos|https://youtu.be/curlbiceps
-Press Militar|Hombros|https://youtu.be/pressmilitar
-Zancadas|Piernas|https://youtu.be/zancadas
-Crunch Abdominal|Abdominales|https://youtu.be/crunch
-Remo con Mancuerna|Espalda|https://youtu.be/remo
-Dips en Paralelas|Tríceps|https://youtu.be/dips
-Elevaciones Laterales|Hombros|https://youtu.be/elevaciones
-Burpees|Cardio|https://youtu.be/burpees
-Mountain Climbers|Cardio|https://youtu.be/mountainclimbers
-Jumping Jacks|Cardio|https://youtu.be/jumpingjacks
+ejmod|ejmod|uploads/1752808066715-1752720667036-isaac.mp4
