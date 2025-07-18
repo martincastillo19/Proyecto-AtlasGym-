@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 function AdministracionEjercicios() {
+  // Estados para manejar ejercicios, modal, filtro y nuevo ejercicio
   const [ejercicios, setEjercicios] = useState([]);
   const [ejercicioSeleccionado, setEjercicioSeleccionado] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -10,13 +11,16 @@ function AdministracionEjercicios() {
     zona: "",
     archivo: null,
   });
+  const inputArchivoRef = useRef(null);
   const [videoSeleccionado, setVideoSeleccionado] = useState(null);
 
+  // Efecto para bloquear el scroll del body cuando se muestra un modal
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => (document.body.style.overflow = "auto");
   }, []);
 
+  // Carga los ejercicios desde el backend
   const cargarEjercicios = () => {
     fetch("http://localhost:3000/ejercicios")
       .then((res) => res.text())
@@ -33,15 +37,25 @@ function AdministracionEjercicios() {
       .catch((err) => console.error("Error al obtener ejercicios:", err));
   };
 
+  // Abre el modal para editar un ejercicio
   const abrirModal = (ejercicio) => {
-    setEjercicioSeleccionado({ ...ejercicio, nuevoArchivo: null });
+    setEjercicioSeleccionado({
+      ...ejercicio,
+      nombreOriginal: ejercicio.nombre, // para conservar el nombre original
+      nuevoArchivo: null,
+    });
     setMostrarModal(true);
   };
 
+  // Guarda los cambios realizados en un ejercicio
   const guardarCambios = () => {
     const formData = new FormData();
     formData.append("nombre", ejercicioSeleccionado.nombre);
     formData.append("zona", ejercicioSeleccionado.zona);
+    formData.append(
+      "nombreOriginal",
+      ejercicioSeleccionado.nombreOriginal || ejercicioSeleccionado.nombre
+    );
     if (ejercicioSeleccionado.nuevoArchivo) {
       formData.append("archivo", ejercicioSeleccionado.nuevoArchivo);
     }
@@ -52,7 +66,6 @@ function AdministracionEjercicios() {
     })
       .then((res) => res.text())
       .then(() => {
-        alert("Ejercicio actualizado correctamente.");
         setMostrarModal(false);
         cargarEjercicios();
       })
@@ -62,6 +75,7 @@ function AdministracionEjercicios() {
       });
   };
 
+  // Elimina un ejercicio
   const eliminarEjercicio = (nombre) => {
     if (!window.confirm(`¿Eliminar ejercicio ${nombre}?`)) return;
 
@@ -72,7 +86,6 @@ function AdministracionEjercicios() {
     })
       .then((res) => res.text())
       .then(() => {
-        alert("Ejercicio eliminado");
         cargarEjercicios();
       })
       .catch((err) => {
@@ -81,6 +94,7 @@ function AdministracionEjercicios() {
       });
   };
 
+  // Agrega un nuevo ejercicio
   const agregarEjercicio = () => {
     const { nombre, zona, archivo } = nuevoEjercicio;
     if (!nombre || !zona || !archivo) {
@@ -99,8 +113,8 @@ function AdministracionEjercicios() {
     })
       .then((res) => res.text())
       .then(() => {
-        alert("Ejercicio agregado correctamente.");
         setNuevoEjercicio({ nombre: "", zona: "", archivo: null });
+        if (inputArchivoRef.current) inputArchivoRef.current.value = null; // ← limpia el input
         cargarEjercicios();
       })
       .catch((err) => {
@@ -108,7 +122,7 @@ function AdministracionEjercicios() {
         alert("Error al agregar.");
       });
   };
-
+  // Filtra los ejercicios según el texto ingresado
   const ejerciciosFiltrados = ejercicios.filter(
     (e) =>
       e.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -122,14 +136,20 @@ function AdministracionEjercicios() {
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Administración de Ejercicios</h2>
-      Búsqueda por nombre o zona:
-      <input
-        type="text"
-        placeholder='ej: "sentadillas" o "piernas"'
-        value={filtro}
-        onChange={(e) => setFiltro(e.target.value)}
-        style={styles.filtro}
-      />
+
+      {/* Filtro de búsqueda */}
+      <div>
+        <p>Búsqueda por nombre o zona:</p>
+        <input
+          type="text"
+          placeholder='ej: "sentadillas" o "piernas"'
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          style={styles.filtro}
+        />
+      </div>
+
+      {/* Tabla de ejercicios */}
       <div style={styles.tabla}>
         <div style={styles.encabezado}>
           <div>Nombre</div>
@@ -157,12 +177,7 @@ function AdministracionEjercicios() {
               <div>
                 <button
                   onClick={() => setVideoSeleccionado(ejercicio.linkvideo)}
-                  style={{
-                    ...styles.link,
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
+                  style={styles.fileButton}
                 >
                   Ver video
                 </button>
@@ -193,16 +208,19 @@ function AdministracionEjercicios() {
           ))
         )}
       </div>
+
+      {/* Modal de edición */}
       {mostrarModal && ejercicioSeleccionado && (
         <div style={styles.modalOverlay} onClick={() => setMostrarModal(false)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3>Editar Ejercicio</h3>
-            {[
-              { campo: "nombre", label: "Nombre" },
-              { campo: "zona", label: "Zona" },
-            ].map(({ campo, label }) => (
-              <div style={{ marginBottom: "1rem" }} key={campo}>
-                <label style={styles.label}>{label}:</label>
+
+            {/* Campos nombre y zona */}
+            {["nombre", "zona"].map((campo) => (
+              <div key={campo} style={{ marginBottom: "1rem" }}>
+                <label style={styles.label}>
+                  {campo.charAt(0).toUpperCase() + campo.slice(1)}:
+                </label>
                 <input
                   type="text"
                   value={ejercicioSeleccionado[campo]}
@@ -216,6 +234,8 @@ function AdministracionEjercicios() {
                 />
               </div>
             ))}
+
+            {/* Archivo nuevo */}
             <div style={{ marginBottom: "1rem" }}>
               <label style={styles.label}>Nuevo archivo (opcional):</label>
               <input
@@ -229,6 +249,7 @@ function AdministracionEjercicios() {
                 style={styles.modalInput}
               />
             </div>
+
             <div style={styles.modalBotones}>
               <button onClick={guardarCambios} style={styles.botonVerde}>
                 Guardar
@@ -243,6 +264,8 @@ function AdministracionEjercicios() {
           </div>
         </div>
       )}
+
+      {/* Modal de video */}
       {videoSeleccionado && (
         <div
           style={styles.modalOverlay}
@@ -250,14 +273,12 @@ function AdministracionEjercicios() {
         >
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3>Reproduciendo Video</h3>
-
             <div
               style={{
                 display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
                 flexDirection: "column",
-                gap: "1rem", // espacio entre video y botón
+                alignItems: "center",
+                gap: "1rem",
               }}
             >
               <video
@@ -269,19 +290,19 @@ function AdministracionEjercicios() {
                   borderRadius: "5px",
                 }}
               />
-              <div style={styles.modalBotones}>
-                <button
-                  onClick={() => setVideoSeleccionado(null)}
-                  style={styles.botonRojo}
-                >
-                  Cerrar
-                </button>
-              </div>
+              <button
+                onClick={() => setVideoSeleccionado(null)}
+                style={styles.botonRojo}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
       )}
-      Agregar un nuevo ejercicio:
+
+      {/* Agregar nuevo ejercicio */}
+      <p>Agregar un nuevo ejercicio:</p>
       <div style={styles.agregarGrid}>
         <input
           type="text"
@@ -303,6 +324,7 @@ function AdministracionEjercicios() {
         />
         <input
           type="file"
+          ref={inputArchivoRef}
           onChange={(e) =>
             setNuevoEjercicio({ ...nuevoEjercicio, archivo: e.target.files[0] })
           }
@@ -320,7 +342,7 @@ export default AdministracionEjercicios;
 
 const styles = {
   container: {
-    maxWidth: "1200px",
+    maxWidth: "1150px",
     margin: "1rem auto",
     backgroundColor: "#1e1e1e",
     padding: "1rem",
@@ -349,7 +371,7 @@ const styles = {
   },
   input: {
     padding: "0.5rem",
-    minWidth: "330px",
+    minWidth: "311px",
     borderRadius: "4px",
     border: "1px solid #555",
     backgroundColor: "#2a2a2a",
@@ -375,7 +397,7 @@ const styles = {
     fontWeight: "bold",
   },
   tabla: {
-    maxHeight: "400px",
+    maxHeight: "340px",
     height: "400px",
     overflowY: "auto",
     border: "1px solid #444",
@@ -408,9 +430,8 @@ const styles = {
     width: "30px",
     height: "30px",
   },
-  link: {
-    color: "#0af",
-    textDecoration: "underline",
+  fileButton: {
+    color: "rgba(108, 117, 216, 0.8)",
   },
   modalOverlay: {
     position: "fixed",
