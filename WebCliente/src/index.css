@@ -11,10 +11,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* Oculta el scrollbar en navegadores WebKit */
-::-webkit-scrollbar {
-  display: none;
-}
 
 a {
   font-weight: 500;
