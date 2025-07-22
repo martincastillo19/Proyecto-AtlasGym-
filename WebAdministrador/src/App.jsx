@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import NuevoClienteForm from "./components/NuevoClienteForm";
 import ListaMembresia from "./components/ListaMembresias";
 import Ejercicios from "./components/Ejercicios";
+import Inventario from "./components/Inventario";
 
 function App() {
   const [vista, setVista] = useState("membresias");
@@ -15,7 +16,7 @@ function App() {
       case "ejercicios":
         return <Ejercicios />;
       case "inventario":
-        return <h2 style={{ color: "white" }}>Inventario</h2>;
+        return <Inventario />;
       default:
         return <NuevoClienteForm />;
     }
