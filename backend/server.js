@@ -1,56 +1,146 @@
 const express = require("express");
-const multer = require("multer");
 const fs = require("fs");
-const path = require("path");
 const cors = require("cors");
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
-const port = 3000;
-
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
-// Crear carpeta uploads si no existe
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-}
+const CLIENTES_PATH = "./Clientes.txt";
+const EJERCICIOS_PATH = "./Ejercicios.txt";
+const INVENTARIO_PATH = "./Inventario.txt";
 
-// Configuración de multer
+const UPLOADS_DIR = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    const timestamp = Date.now();
-    const nombreFinal = `${timestamp}-${file.originalname}`;
-    cb(null, nombreFinal);
-  },
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
 });
+
 const upload = multer({ storage });
 
-// =======================================
-// GET /ejercicios
-// =======================================
-app.get("/ejercicios", (req, res) => {
-  fs.readFile("Ejercicios.txt", "utf8", (err, data) => {
-    if (err) return res.status(500).send("Error al leer ejercicios.");
+// --- RUTAS CLIENTES ---
 
-    const ejercicios = data
-      .split("\n")
-      .filter((linea) => linea.trim() !== "")
-      .map((linea) => {
-        const [nombre, zona, archivo] = linea.split("|");
-        return { nombre, zona, archivo };
-      });
-
-    res.json(ejercicios);
+// Obtener clientes
+app.get("/clientes", (req, res) => {
+  fs.readFile(CLIENTES_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer clientes.");
+    res.send(data);
   });
 });
 
-// =======================================
-// POST /ejercicios/subir
-// =======================================
+// Agregar cliente
+app.post("/clientes", (req, res) => {
+  const { data } = req.body;
+  if (!data) return res.status(400).send("Sin datos");
+
+  fs.appendFile(CLIENTES_PATH, data + "\n", (err) => {
+    if (err) return res.status(500).send("Error al guardar cliente.");
+    res.send("Cliente guardado correctamente.");
+  });
+});
+
+// Eliminar cliente por RUT y correo (buscar línea exacta)
+app.post("/clientes/eliminar", (req, res) => {
+  const { rut, correo } = req.body;
+  if (!rut || !correo) return res.status(400).send("Falta rut o correo");
+
+  fs.readFile(CLIENTES_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer clientes.");
+
+    const lineas = data.split("\n").filter((linea) => {
+      if (linea.trim() === "") return false;
+      const [_, __, r, c] = linea.split("|");
+      return !(r === rut && c === correo);
+    });
+
+    fs.writeFile(CLIENTES_PATH, lineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error al escribir clientes.");
+      res.send("Cliente eliminado.");
+    });
+  });
+});
+
+// Actualizar cliente por correo original, validando RUT y correo duplicado
+app.put("/clientes/actualizar", (req, res) => {
+  const clienteActualizado = req.body;
+
+  if (!clienteActualizado.correoOriginal) {
+    return res
+      .status(400)
+      .send("Falta correoOriginal para identificar cliente.");
+  }
+
+  fs.readFile(CLIENTES_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error leyendo clientes.");
+
+    const lineas = data.split("\n").filter((line) => line.trim() !== "");
+
+    let encontrado = false;
+
+    // Validar RUT duplicado (excepto "sin rut")
+    const rutDuplicado = lineas.some((linea) => {
+      const [_, __, rut, correo] = linea.split("|");
+      return (
+        rut === clienteActualizado.rut &&
+        rut !== "sin rut" &&
+        correo !== clienteActualizado.correoOriginal
+      );
+    });
+
+    if (rutDuplicado) {
+      return res.status(409).send("Ya existe un cliente con ese RUT.");
+    }
+
+    // Validar correo duplicado
+    const correoDuplicado = lineas.some((linea) => {
+      const [_, __, ___, correo] = linea.split("|");
+      return (
+        correo === clienteActualizado.correo &&
+        correo !== clienteActualizado.correoOriginal
+      );
+    });
+
+    if (correoDuplicado) {
+      return res.status(409).send("Ya existe un cliente con ese correo.");
+    }
+
+    // Actualizar la línea correspondiente
+    const nuevasLineas = lineas.map((linea) => {
+      const [nombre, apellido, rut, correo, ultimoPago] = linea.split("|");
+      if (correo === clienteActualizado.correoOriginal) {
+        encontrado = true;
+        return `${clienteActualizado.nombre}|${clienteActualizado.apellido}|${clienteActualizado.rut}|${clienteActualizado.correo}|${clienteActualizado.ultimoPago}`;
+      }
+      return linea;
+    });
+
+    if (!encontrado) {
+      return res.status(404).send("Cliente original no encontrado.");
+    }
+
+    fs.writeFile(CLIENTES_PATH, nuevasLineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error escribiendo clientes.");
+      res.json({ ok: true, mensaje: "Cliente actualizado correctamente." });
+    });
+  });
+});
+
+// --- RUTAS EJERCICIOS ---
+
+// Obtener ejercicios
+app.get("/ejercicios", (req, res) => {
+  fs.readFile(EJERCICIOS_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer ejercicios.");
+    res.send(data);
+  });
+});
+
+// Agregar ejercicio (con archivo)
 app.post("/ejercicios/subir", upload.single("archivo"), (req, res) => {
   const { nombre, zona } = req.body;
 
@@ -66,10 +156,32 @@ app.post("/ejercicios/subir", upload.single("archivo"), (req, res) => {
     res.send("Ejercicio guardado correctamente.");
   });
 });
+// Eliminar ejercicio
+app.post("/ejercicios/eliminar", (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) return res.status(400).send("Falta nombre");
 
-// =======================================
-// PUT /ejercicios/actualizar
-// =======================================
+  fs.readFile(EJERCICIOS_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer ejercicios.");
+
+    const lineas = data.split("\n").filter((linea) => {
+      if (linea.trim() === "") return false;
+      const [n, _, ruta] = linea.split("|");
+      if (n === nombre) {
+        if (fs.existsSync(ruta)) fs.unlinkSync(ruta);
+        return false;
+      }
+      return true;
+    });
+
+    fs.writeFile(EJERCICIOS_PATH, lineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error al escribir ejercicios.");
+      res.send("Ejercicio eliminado.");
+    });
+  });
+});
+
+// Actualizar ejercicio (puede tener nuevo archivo)
 app.put("/ejercicios/actualizar", upload.single("archivo"), (req, res) => {
   const { nombre, zona, nombreOriginal } = req.body;
 
@@ -117,54 +229,86 @@ app.put("/ejercicios/actualizar", upload.single("archivo"), (req, res) => {
   });
 });
 
-// =======================================
-// DELETE /ejercicios/eliminar
-// =======================================
-app.delete("/ejercicios/eliminar", (req, res) => {
-  const { nombre } = req.body;
+// --- RUTAS INVENTARIO ---
 
-  if (!nombre) return res.status(400).send("Falta el nombre del ejercicio.");
-
-  fs.readFile("Ejercicios.txt", "utf8", (err, data) => {
-    if (err) return res.status(500).send("Error al leer ejercicios.");
-
-    const lineas = data
-      .split("\n")
-      .filter((linea) => linea.trim() !== "")
-      .map((linea) => linea.split("|"));
-
-    let archivoAEliminar = null;
-
-    const nuevasLineas = lineas.filter(([n, zona, archivo]) => {
-      if (n === nombre) {
-        archivoAEliminar = archivo;
-        return false;
-      }
-      return true;
-    });
-
-    if (!archivoAEliminar)
-      return res.status(404).send("Ejercicio no encontrado.");
-
-    fs.writeFile(
-      "Ejercicios.txt",
-      nuevasLineas.map((l) => l.join("|")).join("\n") + "\n",
-      (err) => {
-        if (err) return res.status(500).send("Error al guardar cambios.");
-
-        if (fs.existsSync(archivoAEliminar)) {
-          fs.unlink(archivoAEliminar, (err) => {
-            if (err) console.warn("No se pudo borrar el archivo:", err);
-          });
-        }
-
-        res.send("Ejercicio eliminado correctamente.");
-      }
-    );
+// Obtener inventario
+app.get("/inventario", (req, res) => {
+  fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer inventario.");
+    res.send(data);
   });
 });
 
-// =======================================
-app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
+// Agregar producto
+app.post("/inventario", (req, res) => {
+  const { nombre, cantidad, descripcion } = req.body;
+  if (!nombre || !cantidad) {
+    return res.status(400).send("Faltan campos.");
+  }
+
+  const linea = `${nombre}|${cantidad}|${descripcion || ""}\n`;
+
+  fs.appendFile(INVENTARIO_PATH, linea, (err) => {
+    if (err) return res.status(500).send("Error al guardar producto.");
+    res.send("Producto agregado correctamente.");
+  });
 });
+
+// Eliminar producto por nombre
+app.post("/inventario/eliminar", (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) return res.status(400).send("Falta nombre");
+
+  fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer inventario.");
+
+    const lineas = data
+      .split("\n")
+      .filter((linea) => linea.trim() !== "" && !linea.startsWith(nombre + "|"));
+
+    fs.writeFile(INVENTARIO_PATH, lineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error al escribir inventario.");
+      res.send("Producto eliminado.");
+    });
+  });
+});
+
+// Actualizar producto (por nombre original)
+app.put("/inventario/actualizar", (req, res) => {
+  const { nombreOriginal, nombre, cantidad, descripcion } = req.body;
+  if (!nombreOriginal || !nombre || !cantidad) {
+    return res.status(400).send("Faltan campos.");
+  }
+
+  fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer inventario.");
+
+    let encontrado = false;
+    const nuevasLineas = data
+      .split("\n")
+      .filter((linea) => linea.trim() !== "")
+      .map((linea) => {
+        const [n] = linea.split("|");
+        if (n === nombreOriginal) {
+          encontrado = true;
+          return `${nombre}|${cantidad}|${descripcion || ""}`;
+        }
+        return linea;
+      });
+
+    if (!encontrado) return res.status(404).send("Producto no encontrado.");
+
+    fs.writeFile(INVENTARIO_PATH, nuevasLineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error al guardar inventario.");
+      res.send("Producto actualizado.");
+    });
+  });
+});
+
+
+// Servir archivos estáticos (para poder acceder a los videos desde frontend)
+app.use("/uploads", express.static(UPLOADS_DIR));
+
+app.listen(3000, () =>
+  console.log("Servidor corriendo en http://localhost:3000")
+);
