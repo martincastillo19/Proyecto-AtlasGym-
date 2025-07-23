@@ -1,0 +1,2 @@
+nombre|cantidad|descripcion
+Elpepe|3|
