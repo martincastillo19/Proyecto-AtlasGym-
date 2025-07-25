@@ -1,10 +1,27 @@
 import React, { useState, useEffect } from "react";
-import Consulta from "./components/Consulta";
-import VerEjercicios from "./components/VerEjercicios";
+import Consulta from "../client/Consulta";
+import VerEjercicios from "../client/VerEjercicios";
+import { useNavigate } from "react-router-dom";
 
-function App() {
+function ClientHome({ setTipoUsuario }) {
   const [vista, setVista] = useState("Consulta");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [usuario, setUsuario] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userStr = localStorage.getItem("usuario");
+    if (userStr) {
+      setUsuario(JSON.parse(userStr));
+    }
+  }, []);
+
+  const cerrarSesion = () => {
+    localStorage.removeItem("tipoUsuario");
+    localStorage.removeItem("usuario");
+    setTipoUsuario(null);
+    navigate("/");
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -17,7 +34,7 @@ function App() {
   const renderContenido = () => {
     switch (vista) {
       case "Consulta":
-        return <Consulta />;
+        return <Consulta usuario={usuario} />;
       case "ejercicios":
         return <VerEjercicios />;
       default:
@@ -71,6 +88,18 @@ function App() {
         >
           Ver <br /> ejercicios
         </button>
+
+        {isMobile ? (
+          <div style={{ marginTop: "1rem", textAlign: "center" }}>
+            <button onClick={cerrarSesion} style={botonCerrarSesion}>
+              Cerrar sesión
+            </button>
+          </div>
+        ) : (
+          <button onClick={cerrarSesion} style={botonCerrarSesion}>
+            Cerrar sesión
+          </button>
+        )}
       </div>
 
       <div
@@ -79,7 +108,7 @@ function App() {
           padding: isMobile ? "1rem" : "2rem",
           maxWidth: "900px",
           margin: "0 auto",
-          maxHeight: "calc(100vh - 2rem)", // menos padding para no salirse
+          maxHeight: "calc(100vh - 2rem)",
           overflowY: "auto",
         }}
       >
@@ -102,4 +131,14 @@ const botonEstilo = (isMobile) => ({
   width: isMobile ? "45%" : "100%",
 });
 
-export default App;
+const botonCerrarSesion = {
+  backgroundColor: "#ff4d4d",
+  color: "white",
+  border: "none",
+  padding: "0.8rem",
+  borderRadius: "8px",
+  fontSize: "1rem",
+  cursor: "pointer",
+};
+
+export default ClientHome;

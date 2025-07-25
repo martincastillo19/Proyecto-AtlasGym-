@@ -1,11 +1,19 @@
 import React, { useState } from "react";
-import NuevoClienteForm from "./components/NuevoClienteForm";
-import ListaMembresia from "./components/ListaMembresias";
-import Ejercicios from "./components/Ejercicios";
-import Inventario from "./components/Inventario";
+import NuevoClienteForm from "../admin/NuevoClienteForm";
+import ListaMembresia from "../admin/ListaMembresias";
+import Ejercicios from "../admin/Ejercicios";
+import { useNavigate } from "react-router-dom";
 
-function App() {
+function AdminHome({ setTipoUsuario }) {
   const [vista, setVista] = useState("membresias");
+  const navigate = useNavigate();
+
+  const cerrarSesion = () => {
+    localStorage.removeItem("tipoUsuario");
+    localStorage.removeItem("usuario");
+    setTipoUsuario(null);
+    navigate("/");
+  };
 
   const renderContenido = () => {
     switch (vista) {
@@ -16,7 +24,7 @@ function App() {
       case "ejercicios":
         return <Ejercicios />;
       case "inventario":
-        return <Inventario />;
+        return <h2 style={{ color: "white" }}>Inventario</h2>;
       default:
         return <NuevoClienteForm />;
     }
@@ -53,24 +61,23 @@ function App() {
         </div>
         <button style={botonEstilo} onClick={() => setVista("membresias")}>
           Lista de
-          <br />
-          membresías
+          <br /> membresías
         </button>
         <button style={botonEstilo} onClick={() => setVista("registrar")}>
           Registrar
-          <br />
-          Usuario
+          <br /> Usuario
         </button>
         <button style={botonEstilo} onClick={() => setVista("ejercicios")}>
           Administrar
-          <br />
-          Ejercicios
+          <br /> Ejercicios
         </button>
         <button style={botonEstilo} onClick={() => setVista("inventario")}>
           Inventario
         </button>
+        <button onClick={cerrarSesion} style={botonCerrarSesion}>
+          Cerrar sesión
+        </button>
       </div>
-
       <div style={{ flex: 1, padding: "2rem" }}>{renderContenido()}</div>
     </div>
   );
@@ -88,4 +95,15 @@ const botonEstilo = {
   textAlign: "left",
 };
 
-export default App;
+const botonCerrarSesion = {
+  marginTop: "auto",
+  backgroundColor: "#ff4d4d",
+  color: "white",
+  border: "none",
+  padding: "0.8rem",
+  borderRadius: "8px",
+  fontSize: "1rem",
+  cursor: "pointer",
+};
+
+export default AdminHome;
