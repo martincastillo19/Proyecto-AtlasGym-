@@ -1,0 +1,4 @@
+admin|Admin|Uno|1-1|admin@ejemplo.com|admin123||
+cliente|Cliente|Uno|22222222-2|cliente1@ejemplo.com|1234|17/07/25|17/08/25
+cliente|hola|asdasd|21697098-5|g@gmail.com|1234|25/07/25|24/08/2025
+cliente|martin|Castillo|21514824-6|aespinoza@gmail.com|1234|25/07/25|24/08/2025
