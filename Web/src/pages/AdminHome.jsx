@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import NuevoClienteForm from "../admin/NuevoClienteForm";
 import ListaMembresia from "../admin/ListaMembresias";
 import Ejercicios from "../admin/Ejercicios";
+import Inventario from "../admin/Inventario";
 import { useNavigate } from "react-router-dom";
 
 function AdminHome({ setTipoUsuario }) {
@@ -24,7 +25,7 @@ function AdminHome({ setTipoUsuario }) {
       case "ejercicios":
         return <Ejercicios />;
       case "inventario":
-        return <h2 style={{ color: "white" }}>Inventario</h2>;
+        return <Inventario />;
       default:
         return <NuevoClienteForm />;
     }

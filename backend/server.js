@@ -10,6 +10,7 @@ app.use(express.json());
 
 const USUARIOS_PATH = "./usuarios.txt";
 const EJERCICIOS_PATH = "./Ejercicios.txt";
+const INVENTARIO_PATH = "./Inventario.txt";
 const UPLOADS_DIR = path.join(__dirname, "uploads");
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
@@ -358,6 +359,84 @@ app.put("/ejercicios/actualizar", upload.single("archivo"), (req, res) => {
       }
 
       res.send("Ejercicio actualizado correctamente.");
+    });
+  });
+});
+
+// --- RUTAS INVENTARIO ---
+
+// Obtener inventario
+app.get("/inventario", (req, res) => {
+  fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer inventario.");
+    res.send(data);
+  });
+});
+
+// Agregar producto
+app.post("/inventario", (req, res) => {
+  const { nombre, cantidad, descripcion } = req.body;
+  if (!nombre || !cantidad) {
+    return res.status(400).send("Faltan campos.");
+  }
+
+  const linea = `${nombre}|${cantidad}|${descripcion || ""}\n`;
+
+  fs.appendFile(INVENTARIO_PATH, linea, (err) => {
+    if (err) return res.status(500).send("Error al guardar producto.");
+    res.send("Producto agregado correctamente.");
+  });
+});
+
+// Eliminar producto por nombre
+app.post("/inventario/eliminar", (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) return res.status(400).send("Falta nombre");
+
+  fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer inventario.");
+
+    const lineas = data
+      .split("\n")
+      .filter(
+        (linea) => linea.trim() !== "" && !linea.startsWith(nombre + "|")
+      );
+
+    fs.writeFile(INVENTARIO_PATH, lineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error al escribir inventario.");
+      res.send("Producto eliminado.");
+    });
+  });
+});
+
+// Actualizar producto (por nombre original)
+app.put("/inventario/actualizar", (req, res) => {
+  const { nombreOriginal, nombre, cantidad, descripcion } = req.body;
+  if (!nombreOriginal || !nombre || !cantidad) {
+    return res.status(400).send("Faltan campos.");
+  }
+
+  fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
+    if (err) return res.status(500).send("Error al leer inventario.");
+
+    let encontrado = false;
+    const nuevasLineas = data
+      .split("\n")
+      .filter((linea) => linea.trim() !== "")
+      .map((linea) => {
+        const [n] = linea.split("|");
+        if (n === nombreOriginal) {
+          encontrado = true;
+          return `${nombre}|${cantidad}|${descripcion || ""}`;
+        }
+        return linea;
+      });
+
+    if (!encontrado) return res.status(404).send("Producto no encontrado.");
+
+    fs.writeFile(INVENTARIO_PATH, nuevasLineas.join("\n") + "\n", (err) => {
+      if (err) return res.status(500).send("Error al guardar inventario.");
+      res.send("Producto actualizado.");
     });
   });
 });
