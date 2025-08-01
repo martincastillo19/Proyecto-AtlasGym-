@@ -341,6 +341,7 @@ function AdministracionEjercicios() {
 
 export default AdministracionEjercicios;
 
+// === ESTILOS ===
 const styles = {
   container: {
     maxWidth: "1150px",

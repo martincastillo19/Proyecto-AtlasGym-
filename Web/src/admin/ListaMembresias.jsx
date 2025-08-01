@@ -36,6 +36,10 @@ function ListaMembresia() {
     return cuerpo + "-" + dv;
   }
 
+  const esCorreoValido = (correo) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+  };
+
   const cargarClientes = () => {
     fetch("http://localhost:3000/clientes")
       .then((res) => res.text())
@@ -89,6 +93,11 @@ function ListaMembresia() {
       return;
     }
 
+    if (!esCorreoValido(correoNuevo)) {
+      alert("El correo no tiene un formato válido.");
+      return;
+    }
+
     const correoRepetido =
       correoNuevo !== clienteSeleccionado.correo.toLowerCase() &&
       clientes.some((c) => c.correo.trim().toLowerCase() === correoNuevo);
@@ -134,7 +143,7 @@ function ListaMembresia() {
     fetch("http://localhost:3000/clientes/eliminar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(clienteEliminar), // Se envían todos los datos
+      body: JSON.stringify(clienteEliminar),
     })
       .then((res) => {
         if (!res.ok) throw new Error("Error al eliminar");

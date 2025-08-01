@@ -110,6 +110,7 @@ function Consulta({ usuario }) {
   );
 }
 
+// === ESTILOS ===
 const styles = {
   card: {
     backgroundColor: "#222",

@@ -100,6 +100,7 @@ function Inventario() {
   );
 
   useEffect(() => {
+    document.body.style.overflow = "hidden";
     cargarInventario();
   }, []);
 
@@ -246,6 +247,7 @@ function Inventario() {
 
 export default Inventario;
 
+// === ESTILOS ===
 const styles = {
   container: {
     maxWidth: "1150px",

@@ -1,39 +1,71 @@
 import React, { useEffect, useState } from "react";
 
 function VerEjercicios() {
+  // Estados principales
   const [ejercicios, setEjercicios] = useState([]);
   const [filtroTexto, setFiltroTexto] = useState("");
   const [zonaSeleccionada, setZonaSeleccionada] = useState("");
   const [videoSeleccionado, setVideoSeleccionado] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetch("http://localhost:3000/ejercicios")
-      .then((res) => res.text())
-      .then((data) => {
-        const arr = data
-          .split("\n")
-          .filter((line) => line.trim() !== "")
-          .map((line) => {
-            const [nombre, zona, linkvideo] = line.split("|");
-            return { nombre, zona: zona.toLowerCase(), linkvideo };
-          });
-        setEjercicios(arr);
-      })
-      .catch((err) => console.error("Error al obtener ejercicios:", err));
-  }, []);
+  // Cargar ejercicios desde el backend
+  const cargarEjercicios = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("http://localhost:3000/ejercicios");
+      if (!res.ok)
+        throw new Error("No se pudo cargar el archivo de ejercicios");
+      const data = await res.text();
+      const arr = data
+        .split("\n")
+        .filter((line) => line.trim() !== "")
+        .map((line) => {
+          const [nombre, zona, linkvideo] = line.split("|");
+          return { nombre, zona: zona.toLowerCase(), linkvideo };
+        });
+      setEjercicios(arr);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const zonasUnicas = [...new Set(ejercicios.map((e) => e.zona))];
+  // Filtrar y ordenar zonas únicas para el filtro lateral
+  const zonasUnicas = [...new Set(ejercicios.map((e) => e.zona))].sort();
 
+  // Filtrado de ejercicios según texto y zona seleccionada
   const ejerciciosFiltrados = ejercicios.filter((e) => {
+    const texto = filtroTexto.toLowerCase();
     const coincideTexto =
-      e.nombre.toLowerCase().includes(filtroTexto.toLowerCase()) ||
-      e.zona.toLowerCase().includes(filtroTexto.toLowerCase());
+      e.nombre.toLowerCase().includes(texto) || e.zona.includes(texto);
     const coincideZona = zonaSeleccionada ? e.zona === zonaSeleccionada : true;
     return coincideTexto && coincideZona;
   });
 
+  // Cerrar modal de video con tecla ESC
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        setVideoSeleccionado(null);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  // Carga los ejercicios cuando el componente monta
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    cargarEjercicios();
+  }, []);
+
   return (
     <div style={styles.page}>
+      {/* Sidebar con filtro por zona */}
       <div style={styles.sidebar}>
         <h3 style={{ textAlign: "center" }}>Filtrar por zona</h3>
         <button
@@ -42,9 +74,9 @@ function VerEjercicios() {
         >
           Mostrar todos
         </button>
-        {zonasUnicas.map((zona, index) => (
+        {zonasUnicas.map((zona) => (
           <button
-            key={index}
+            key={zona}
             onClick={() => setZonaSeleccionada(zona)}
             style={{
               ...styles.filterButton,
@@ -57,9 +89,11 @@ function VerEjercicios() {
         ))}
       </div>
 
+      {/* Contenedor principal */}
       <div style={styles.container}>
         <h2 style={styles.title}>Bienvenido/a - Rutina de Ejercicios</h2>
 
+        {/* Campo de búsqueda */}
         <div>
           <p>Búsqueda por nombre o zona:</p>
           <input
@@ -71,41 +105,52 @@ function VerEjercicios() {
           />
         </div>
 
-        <div style={styles.tabla}>
-          <div style={styles.encabezado}>
-            <div>Nombre</div>
-            <div>Zona</div>
-            <div>Video</div>
-          </div>
+        {/* Mensajes de error o loading */}
+        {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+        {loading && (
+          <p style={{ textAlign: "center" }}>Cargando ejercicios...</p>
+        )}
 
-          {ejerciciosFiltrados.length === 0 ? (
-            <p style={{ padding: "1rem", textAlign: "center" }}>
-              No hay ejercicios para mostrar.
-            </p>
-          ) : (
-            ejerciciosFiltrados.map((ejercicio, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.fila,
-                  backgroundColor: index % 2 === 0 ? "#222" : "#1a1a1a",
-                }}
-              >
-                <div>{ejercicio.nombre}</div>
-                <div>{ejercicio.zona}</div>
-                <div>
-                  <button
-                    onClick={() => setVideoSeleccionado(ejercicio.linkvideo)}
-                    style={styles.fileButton}
-                  >
-                    Ver video
-                  </button>
+        {/* Tabla de ejercicios */}
+        {!loading && (
+          <div style={styles.tabla}>
+            <div style={styles.encabezado}>
+              <div>Nombre</div>
+              <div>Zona</div>
+              <div>Video</div>
+            </div>
+
+            {ejerciciosFiltrados.length === 0 ? (
+              <p style={{ padding: "1rem", textAlign: "center" }}>
+                No hay ejercicios para mostrar.
+              </p>
+            ) : (
+              ejerciciosFiltrados.map((ejercicio, index) => (
+                <div
+                  key={`${ejercicio.nombre}-${ejercicio.zona}`}
+                  style={{
+                    ...styles.fila,
+                    backgroundColor: index % 2 === 0 ? "#222" : "#1a1a1a",
+                  }}
+                >
+                  <div>{ejercicio.nombre}</div>
+                  <div>{ejercicio.zona}</div>
+                  <div>
+                    <button
+                      title={ejercicio.linkvideo}
+                      onClick={() => setVideoSeleccionado(ejercicio.linkvideo)}
+                      style={styles.fileButton}
+                    >
+                      Ver video
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
 
+        {/* Modal para reproducir video */}
         {videoSeleccionado && (
           <div
             style={styles.modalOverlay}
@@ -147,18 +192,19 @@ function VerEjercicios() {
 
 export default VerEjercicios;
 
+// === ESTILOS ===
 const styles = {
   page: {
     display: "flex",
     height: "90vh",
-    width: "60vw",
+    width: "80vw",
     background: "linear-gradient(to right, #1e1e1e, #2a2a2a)",
     color: "white",
     fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
     overflow: "hidden",
   },
   sidebar: {
-    width: "200px",
+    width: "250px",
     padding: "1rem",
     borderRight: "1px solid #444",
     backgroundColor: "#111",
@@ -176,14 +222,15 @@ const styles = {
     cursor: "pointer",
     textAlign: "left",
     fontSize: "1rem",
+    transition: "background-color 0.3s",
+    ":hover": {
+      backgroundColor: "#333",
+    },
   },
   container: {
     flex: 1,
-    padding: "2rem",
+    padding: "0.5rem",
     width: "300vw",
-    overflowY: "scroll",
-    scrollbarWidth: "none",
-    msOverflowStyle: "none",
   },
   title: {
     textAlign: "center",

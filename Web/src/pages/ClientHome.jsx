@@ -106,10 +106,10 @@ function ClientHome({ setTipoUsuario }) {
         style={{
           flex: 1,
           padding: isMobile ? "1rem" : "2rem",
-          maxWidth: "900px",
+          maxWidth: "100%",
+          maxheight: "90%",
           margin: "0 auto",
           maxHeight: "calc(100vh - 2rem)",
-          overflowY: "auto",
         }}
       >
         {renderContenido()}
@@ -132,6 +132,7 @@ const botonEstilo = (isMobile) => ({
 });
 
 const botonCerrarSesion = {
+  marginTop: "auto",
   backgroundColor: "#ff4d4d",
   color: "white",
   border: "none",
@@ -139,6 +140,7 @@ const botonCerrarSesion = {
   borderRadius: "8px",
   fontSize: "1rem",
   cursor: "pointer",
+  width: "100%",
 };
 
 export default ClientHome;

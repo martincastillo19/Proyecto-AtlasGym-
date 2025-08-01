@@ -1,23 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const ADMIN_PIN = "123456";
-
 function Login({ setTipoUsuario, setUsuario }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [mostrarPasswordLogin, setMostrarPasswordLogin] = useState(false);
   const [error, setError] = useState("");
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [registro, setRegistro] = useState({
-    nombre: "",
-    apellido: "",
-    rut: "",
-    correo: "",
-    pin: "",
-  });
-
-  // Estado local para usuarios registrados (en producción usar API)
-  const [usuarios, setUsuarios] = useState([]);
 
   const navigate = useNavigate();
 
@@ -47,42 +35,24 @@ function Login({ setTipoUsuario, setUsuario }) {
     }
   };
 
-  const handleRegistro = (e) => {
-    e.preventDefault();
-    const { nombre, apellido, rut, correo, pin } = registro;
-
-    if (pin !== ADMIN_PIN) {
-      setError("PIN incorrecto. Solo los administradores pueden registrar.");
-      return;
-    }
-
-    // Aquí agregarías llamada API para registrar el usuario en backend
-    // Por ahora actualizamos localmente:
-    const nuevoCliente = {
-      username: rut,
-      password: rut.slice(-4), // contraseña inicial = últimos 4 dígitos del rut
-      rol: "cliente",
-      nombre,
-      apellido,
-      rut,
-      correo,
-      fechaultimopago: "",
-      fechavencimiento: "",
-    };
-
-    setUsuarios([...usuarios, nuevoCliente]);
-    setMostrarModal(false);
-    setRegistro({ nombre: "", apellido: "", rut: "", correo: "", pin: "" });
-    setError("");
-    alert("Cliente registrado correctamente.");
-  };
-
   return (
     <div style={styles.container}>
+      <div style={styles.logoContainer}>
+        <img
+          src="/assets/atlaslogo_blanco.png"
+          alt="Atlas Logo Izquierdo"
+          style={styles.logo}
+        />
+      </div>
+
       <div style={styles.box}>
         <h2 style={styles.title}>Iniciar Sesión</h2>
         <form onSubmit={handleLogin} style={styles.form}>
+          <label htmlFor="rutInput" style={styles.label}>
+            RUT
+          </label>
           <input
+            id="rutInput"
             type="text"
             placeholder="RUT"
             value={username}
@@ -90,103 +60,54 @@ function Login({ setTipoUsuario, setUsuario }) {
             required
             style={styles.input}
           />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={styles.input}
-          />
+
+          <label htmlFor="passwordInput" style={styles.label}>
+            Contraseña
+          </label>
+          <div style={styles.passwordWrapper}>
+            <input
+              id="passwordInput"
+              type={mostrarPasswordLogin ? "text" : "password"}
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={styles.input}
+            />
+            <img
+              src={
+                mostrarPasswordLogin ? "/assets/ocultar.png" : "/assets/ojo.png"
+              }
+              alt={
+                mostrarPasswordLogin
+                  ? "Ocultar contraseña"
+                  : "Mostrar contraseña"
+              }
+              onClick={() => setMostrarPasswordLogin(!mostrarPasswordLogin)}
+              style={styles.showIcon}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  setMostrarPasswordLogin(!mostrarPasswordLogin);
+                }
+              }}
+            />
+          </div>
+
           <button type="submit" style={styles.button}>
             Ingresar
           </button>
           {error && <p style={styles.error}>{error}</p>}
         </form>
-        <button
-          onClick={() => setMostrarModal(true)}
-          style={styles.linkButton}
-          type="button"
-        >
-          Registrar Usuario (Admin)
-        </button>
       </div>
-
-      {/* Modal de registro */}
-      {mostrarModal && (
-        <div style={styles.modalOverlay}>
-          <div style={styles.modalContent}>
-            <h3>Registro de nuevo cliente</h3>
-            <form onSubmit={handleRegistro} style={styles.modalForm}>
-              <input
-                type="text"
-                placeholder="Nombre"
-                value={registro.nombre}
-                onChange={(e) =>
-                  setRegistro({ ...registro, nombre: e.target.value })
-                }
-                required
-                style={styles.input}
-              />
-              <input
-                type="text"
-                placeholder="Apellido"
-                value={registro.apellido}
-                onChange={(e) =>
-                  setRegistro({ ...registro, apellido: e.target.value })
-                }
-                required
-                style={styles.input}
-              />
-              <input
-                type="text"
-                placeholder="RUT"
-                value={registro.rut}
-                onChange={(e) =>
-                  setRegistro({ ...registro, rut: e.target.value })
-                }
-                required
-                style={styles.input}
-              />
-              <input
-                type="email"
-                placeholder="Correo"
-                value={registro.correo}
-                onChange={(e) =>
-                  setRegistro({ ...registro, correo: e.target.value })
-                }
-                required
-                style={styles.input}
-              />
-              <input
-                type="password"
-                placeholder="PIN de administrador"
-                value={registro.pin}
-                onChange={(e) =>
-                  setRegistro({ ...registro, pin: e.target.value })
-                }
-                required
-                style={styles.input}
-              />
-              <div style={styles.modalButtons}>
-                <button type="submit" style={styles.button}>
-                  Registrar
-                </button>
-                <button
-                  type="button"
-                  style={styles.cancelButton}
-                  onClick={() => {
-                    setMostrarModal(false);
-                    setError("");
-                  }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <div style={styles.logoContainer}>
+        <img
+          src="/assets/atlaslogo_blanco.png"
+          alt="Atlas Logo Derecho"
+          style={styles.logo}
+        />
+      </div>
     </div>
   );
 }
@@ -195,97 +116,95 @@ const styles = {
   container: {
     backgroundColor: "#121212",
     color: "white",
-    height: "100vh",
+    minHeight: "98vh",
     display: "flex",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
+    gap: "2rem",
+    padding: "2rem",
+    overflow: "hidden",
+    flexWrap: "nowrap",
+    boxSizing: "border-box",
+    width: "100%",
+  },
+
+  logoContainer: {
+    flexShrink: 0,
+    overflow: "hidden",
+  },
+  logo: {
+    width: "400px",
+    height: "400px",
+    maxHeight: "88vh",
+    objectFit: "contain",
   },
   box: {
     backgroundColor: "#1e1e1e",
     padding: "2rem",
     borderRadius: "12px",
-    textAlign: "center",
     boxShadow: "0 0 15px rgba(255,255,255,0.05)",
+    width: "360px",
   },
   title: {
     fontSize: "2rem",
+    textAlign: "center",
     marginBottom: "20px",
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "center",
+  },
+  label: {
+    marginBottom: "6px",
+    fontWeight: "600",
+    fontSize: "0.95rem",
+    marginLeft: "2px",
   },
   input: {
-    margin: "10px 0",
     padding: "10px",
-    width: "250px",
+    width: "100%",
     borderRadius: "6px",
-    border: "1px solid #ccc",
+    border: "1px solid #444",
     backgroundColor: "#2c2c2c",
     color: "white",
+    fontSize: "1rem",
+    marginBottom: "20px",
+    paddingRight: "3rem",
+    boxSizing: "border-box",
+  },
+  passwordWrapper: {
+    position: "relative",
+    width: "100%",
+    marginBottom: "20px",
+  },
+  showIcon: {
+    position: "absolute",
+    right: "10px",
+    top: "40%",
+    transform: "translateY(-50%)",
+    width: "22px",
+    height: "22px",
+    cursor: "pointer",
+    opacity: 0.8,
+    userSelect: "none",
   },
   button: {
-    marginTop: "15px",
     padding: "10px 20px",
     backgroundColor: "#4CAF50",
     color: "white",
     border: "none",
     borderRadius: "6px",
     cursor: "pointer",
-  },
-  cancelButton: {
-    marginLeft: "10px",
-    padding: "10px 20px",
-    backgroundColor: "#ff4d4d",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "1rem",
+    transition: "background-color 0.3s",
+    width: "100%",
   },
   error: {
-    color: "red",
+    color: "#ff6b6b",
     marginTop: "10px",
-  },
-  linkButton: {
-    background: "none",
-    border: "none",
-    color: "#4FC3F7",
-    marginTop: "20px",
-    cursor: "pointer",
-    fontSize: "1rem",
-    textDecoration: "underline",
-  },
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.8)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  },
-  modalContent: {
-    backgroundColor: "#1e1e1e",
-    padding: "2rem",
-    borderRadius: "10px",
-    width: "300px",
-    color: "white",
+    fontWeight: "600",
     textAlign: "center",
-  },
-  modalForm: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-  modalButtons: {
-    marginTop: "10px",
-    display: "flex",
-    justifyContent: "center",
-    gap: "10px",
   },
 };
 
