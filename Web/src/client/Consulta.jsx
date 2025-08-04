@@ -1,17 +1,37 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-function Consulta({ usuario }) {
-  const [estadoInfo, setEstadoInfo] = useState(null);
+function Consulta() {
+  const [clientes, setClientes] = useState([]);
+  const [filtro, setFiltro] = useState("");
+  const [resultado, setResultado] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [nuevaFecha, setNuevaFecha] = useState("");
 
-  useEffect(() => {
-    if (usuario && usuario.fechaultimopago) {
-      setEstadoInfo(calcularEstado(usuario.fechaultimopago));
+  const validarRut = (rut) => {
+    rut = rut.replace(/\s+/g, "").toLowerCase();
+    const rutRegex = /^(\d{7,8})-([\dk])$/;
+    const match = rut.match(rutRegex);
+    if (!match) return false;
+
+    const cuerpo = match[1];
+    const dv = match[2];
+
+    let suma = 0;
+    let multiplo = 2;
+
+    for (let i = cuerpo.length - 1; i >= 0; i--) {
+      suma += parseInt(cuerpo[i]) * multiplo;
+      multiplo = multiplo === 7 ? 2 : multiplo + 1;
     }
-  }, [usuario]);
+
+    const dvEsperado = 11 - (suma % 11);
+    const dvCalculado =
+      dvEsperado === 11 ? "0" : dvEsperado === 10 ? "k" : dvEsperado.toString();
+
+    return dv === dvCalculado;
+  };
 
   const calcularEstado = (fecha) => {
-    if (!fecha) return null;
-
     const [dia, mes, anio] = fecha.split("/").map((v) => parseInt(v));
     const fechaPago = new Date(2000 + anio, mes - 1, dia);
     const fechaVencimiento = new Date(fechaPago);
@@ -36,142 +56,249 @@ function Consulta({ usuario }) {
     };
   };
 
-  const colorMap = {
-    verde: "#4CAF50",
-    amarillo: "#FFB300",
-    rojo: "#E53935",
-  };
+  const buscarCliente = () => {
+    const busqueda = filtro.trim().toLowerCase();
+    if (!busqueda) {
+      setResultado(null);
+      return;
+    }
 
-  if (!usuario)
-    return (
-      <p
-        style={{
-          color: "#bbb",
-          fontSize: "1.2rem",
-          textAlign: "center",
-          marginTop: "2rem",
-        }}
-      >
-        Cargando usuario...
-      </p>
+    if (!busqueda.includes("@")) {
+      if (!validarRut(busqueda)) {
+        setResultado("RUT inválido");
+        return;
+      }
+    }
+
+    const encontrado = clientes.find(
+      (c) =>
+        c.rut.toLowerCase() === busqueda || c.correo.toLowerCase() === busqueda
     );
 
-  return (
-    <div style={styles.card}>
-      <h2 style={styles.title}>Información del usuario</h2>
-      <div style={styles.row}>
-        <span style={styles.label}>Nombre:</span>
-        <span style={styles.value}>{usuario.nombre}</span>
-      </div>
-      <div style={styles.row}>
-        <span style={styles.label}>Apellido:</span>
-        <span style={styles.value}>{usuario.apellido}</span>
-      </div>
-      <div style={styles.row}>
-        <span style={styles.label}>RUT:</span>
-        <span style={styles.value}>{usuario.rut}</span>
-      </div>
-      <div style={styles.row}>
-        <span style={styles.label}>Correo:</span>
-        <span style={styles.value}>{usuario.correo}</span>
-      </div>
-      <div style={styles.row}>
-        <span style={styles.label}>Último pago:</span>
-        <span style={styles.value}>
-          {usuario.fechaultimopago || "No disponible"}
-        </span>
-      </div>
+    setResultado(encontrado || "No encontrado");
+  };
 
-      {estadoInfo ? (
-        <>
-          <div style={styles.estadoContainer}>
-            <span style={styles.label}>Estado de membresía:</span>
-            <div
-              style={{
-                ...styles.estadoIndicador,
-                backgroundColor: colorMap[estadoInfo.estado],
-                boxShadow: `0 0 8px ${colorMap[estadoInfo.estado]}88`,
-              }}
-              title={`Estado: ${estadoInfo.estado}`}
-            />
-            <span style={styles.diasRestantes}>
-              {estadoInfo.diasRestantes} día
-              {estadoInfo.diasRestantes !== 1 ? "s" : ""} restantes
-            </span>
-          </div>
-          <p style={styles.vence}>
-            <strong>Vence el:</strong> {estadoInfo.fechaVencimiento}
-          </p>
-        </>
-      ) : (
-        <p style={styles.noInfo}>Información de membresía no disponible.</p>
+  // función para actualizar la fecha de pago
+  const actualizarFecha = async () => {
+    if (!nuevaFecha || !resultado) return;
+
+    // Convertir de yyyy-mm-dd a dd/mm/yy
+    const [anio, mes, dia] = nuevaFecha.split("-");
+    const nuevoPagoFormateado = `${dia}/${mes}/${anio.slice(-2)}`;
+
+    try {
+      const res = await fetch(
+        `http://localhost:3000/clientes/${resultado.rut}/vencimiento`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nuevoPago: nuevoPagoFormateado }),
+        }
+      );
+
+      if (res.ok) {
+        alert("Fecha de pago actualizada con éxito.");
+        // Actualizar el cliente en el array general
+        setClientes((prevClientes) =>
+          prevClientes.map((c) =>
+            c.rut === resultado.rut
+              ? { ...c, ultimoPago: nuevoPagoFormateado }
+              : c
+          )
+        );
+        // Actualizar en el resultado de búsqueda
+        setResultado({ ...resultado, ultimoPago: nuevoPagoFormateado });
+        setNuevaFecha(""); // Limpiar el input
+      } else {
+        alert("Error al actualizar la fecha en el servidor.");
+      }
+    } catch (error) {
+      console.error("Error en la actualización:", error);
+      alert("No se pudo conectar con el servidor.");
+    }
+  };
+
+  const containerStyle = {
+    backgroundColor: "#1e1e1e",
+    color: "white",
+    padding: isMobile ? "1rem" : "2rem",
+    borderRadius: "10px",
+    maxWidth: isMobile ? "90%" : "400px",
+    margin: "2rem auto",
+    boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+    fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
+    textAlign: "center",
+  };
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/clientes")
+      .then((res) => res.text())
+      .then((data) => {
+        const arr = data
+          .split("\n")
+          .filter((line) => line.trim() !== "")
+          .map((line) => {
+            const [nombre, apellido, rut, correo, ultimoPago] = line.split("|");
+            return { nombre, apellido, rut, correo, ultimoPago };
+          });
+        setClientes(arr);
+      })
+      .catch((err) => console.error("Error al obtener clientes:", err));
+  }, []);
+
+  const inputStyle = {
+    display: "block",
+    width: "95.5%",
+    padding: "0.5rem",
+    marginBottom: "1rem",
+    backgroundColor: "#2a2a2a",
+    color: "white",
+    border: "1px solid #555",
+    borderRadius: "5px",
+    fontSize: isMobile ? "0.9rem" : "1rem",
+  };
+
+  const buttonStyle = {
+    backgroundColor: "#444",
+    color: "white",
+    padding: "0.6rem 1.2rem",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: isMobile ? "0.9rem" : "1rem",
+    transition: "background-color 0.3s",
+    marginBottom: "1rem",
+    width: "100%",
+  };
+
+  const resultadoStyle = {
+    marginTop: "1rem",
+    backgroundColor: "#2a2a2a",
+    padding: "1rem",
+    borderRadius: "8px",
+    textAlign: "left",
+    lineHeight: "1.5",
+    fontSize: isMobile ? "0.9rem" : "1rem",
+  };
+
+  return (
+    <div style={containerStyle}>
+      <h2 style={{ fontSize: isMobile ? "1.2rem" : "1.5rem" }}>
+        Consultar estado membresía
+      </h2>
+      <input
+        type="text"
+        placeholder="Ingrese RUT (sin puntos y con guión) o correo"
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        style={inputStyle}
+      />
+      <button
+        onClick={buscarCliente}
+        style={buttonStyle}
+        onMouseOver={(e) => (e.target.style.backgroundColor = "#666")}
+        onMouseOut={(e) => (e.target.style.backgroundColor = "#444")}
+      >
+        Buscar
+      </button>
+
+      {resultado === "RUT inválido" && (
+        <p style={{ fontWeight: "bold", color: "tomato" }}>
+          RUT inválido. Asegúrese de usar el formato correcto (12345678-k).
+        </p>
       )}
+
+      {resultado === "No encontrado" && (
+        <p style={{ fontWeight: "bold" }}>No se encontró cliente.</p>
+      )}
+
+      {resultado &&
+        typeof resultado === "object" &&
+        (() => {
+          const { estado, diasRestantes, fechaVencimiento } = calcularEstado(
+            resultado.ultimoPago
+          );
+          const colorMap = {
+            verde: "limegreen",
+            amarillo: "gold",
+            rojo: "red",
+          };
+
+          return (
+            <div style={resultadoStyle}>
+              <p>
+                <strong>Nombre:</strong> {resultado.nombre}
+              </p>
+              <p>
+                <strong>Apellido:</strong> {resultado.apellido}
+              </p>
+              <p>
+                <strong>RUT:</strong> {resultado.rut}
+              </p>
+              <p>
+                <strong>Correo:</strong> {resultado.correo}
+              </p>
+              <p>
+                <strong>Último pago:</strong> {resultado.ultimoPago}
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  marginTop: "0.5rem",
+                }}
+              >
+                <strong>Estado:</strong>
+                <div
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    backgroundColor: colorMap[estado],
+                    borderRadius: "4px",
+                    border: "1px solid #999",
+                  }}
+                />
+                <span>{diasRestantes} días restantes</span>
+              </div>
+              <p style={{ marginTop: "0.5rem" }}>
+                <strong>Vence el:</strong> {fechaVencimiento}
+              </p>
+
+              {/* NUEVA SECCIÓN PARA ACTUALIZAR */}
+              <div style={{ marginTop: "1rem" }}>
+                <label>
+                  <strong>Actualizar fecha de pago:</strong>
+                </label>
+                <input
+                  type="date"
+                  value={nuevaFecha}
+                  onChange={(e) => setNuevaFecha(e.target.value)}
+                  style={{ ...inputStyle, marginTop: "0.5rem" }}
+                />
+                <button onClick={actualizarFecha} style={buttonStyle}>
+                  Guardar nueva fecha
+                </button>
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 }
-
-// === ESTILOS ===
-const styles = {
-  card: {
-    backgroundColor: "#222",
-    borderRadius: "12px",
-    padding: "2rem",
-    maxWidth: "450px",
-    margin: "2rem auto",
-    boxShadow: "0 8px 16px rgba(0,0,0,0.6)",
-    color: "#eee",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: "1.5rem",
-    fontWeight: "700",
-    fontSize: "1.8rem",
-    color: "#90caf9",
-  },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "0.9rem",
-    fontSize: "1.1rem",
-  },
-  label: {
-    fontWeight: "600",
-    color: "#90caf9",
-  },
-  value: {
-    fontWeight: "400",
-    color: "#ddd",
-  },
-  estadoContainer: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.7rem",
-    marginTop: "1.8rem",
-  },
-  estadoIndicador: {
-    width: "22px",
-    height: "22px",
-    borderRadius: "50%",
-    border: "2px solid #444",
-  },
-  diasRestantes: {
-    fontSize: "1rem",
-    color: "#fff",
-    fontWeight: "600",
-  },
-  vence: {
-    marginTop: "0.6rem",
-    fontSize: "1rem",
-    color: "#bbb",
-    textAlign: "center",
-  },
-  noInfo: {
-    fontStyle: "italic",
-    textAlign: "center",
-    marginTop: "1.5rem",
-    color: "#999",
-  },
-};
 
 export default Consulta;
