@@ -272,8 +272,38 @@ function Consulta() {
                     borderRadius: "4px",
                     border: "1px solid #999",
                   }}
-                />
-                <span>{diasRestantes} días restantes</span>
+                >
+                  <strong>Estado:</strong>
+                  <div
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      backgroundColor: colorMap[estado],
+                      borderRadius: "4px",
+                      border: "1px solid #999",
+                    }}
+                  />
+                  <span>{diasRestantes} días restantes</span>
+                </div>
+                <p style={{ marginTop: "0.5rem" }}>
+                  <strong>Vence el:</strong> {fechaVencimiento}
+                </p>
+
+                {/* NUEVA SECCIÓN PARA ACTUALIZAR */}
+                <div style={{ marginTop: "1rem" }}>
+                  <label>
+                    <strong>Actualizar fecha de pago:</strong>
+                  </label>
+                  <input
+                    type="date"
+                    value={nuevaFecha}
+                    onChange={(e) => setNuevaFecha(e.target.value)}
+                    style={{ ...inputStyle, marginTop: "0.5rem" }}
+                  />
+                  <button onClick={actualizarFecha} style={buttonStyle}>
+                    Guardar nueva fecha
+                  </button>
+                </div>
               </div>
               <p style={{ marginTop: "0.5rem" }}>
                 <strong>Vence el:</strong> {fechaVencimiento}
