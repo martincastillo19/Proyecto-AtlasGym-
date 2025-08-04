@@ -5,6 +5,7 @@ function Consulta() {
   const [filtro, setFiltro] = useState("");
   const [resultado, setResultado] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [nuevaFecha, setNuevaFecha] = useState("");
 
   const validarRut = (rut) => {
     rut = rut.replace(/\s+/g, "").toLowerCase();
@@ -77,6 +78,42 @@ function Consulta() {
     setResultado(encontrado || "No encontrado");
   };
 
+  // función para actualizar la fecha de pago
+  const actualizarFecha = async () => {
+    if (!nuevaFecha || !resultado) return;
+
+    // Convertir de yyyy-mm-dd a dd/mm/yy
+    const [anio, mes, dia] = nuevaFecha.split("-");
+    const nuevoPagoFormateado = `${dia}/${mes}/${anio.slice(-2)}`;
+
+    try {
+      const res = await fetch(`http://localhost:3000/clientes/${resultado.rut}/vencimiento`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ nuevoPago: nuevoPagoFormateado }),
+});
+
+
+      if (res.ok) {
+        alert("Fecha de pago actualizada con éxito.");
+        // Actualizar el cliente en el array general
+        setClientes((prevClientes) =>
+          prevClientes.map((c) =>
+            c.rut === resultado.rut ? { ...c, ultimoPago: nuevoPagoFormateado } : c
+          )
+        );
+        // Actualizar en el resultado de búsqueda
+        setResultado({ ...resultado, ultimoPago: nuevoPagoFormateado });
+        setNuevaFecha(""); // Limpiar el input
+      } else {
+        alert("Error al actualizar la fecha en el servidor.");
+      }
+    } catch (error) {
+      console.error("Error en la actualización:", error);
+      alert("No se pudo conectar con el servidor.");
+    }
+  };
+
   const containerStyle = {
     backgroundColor: "#1e1e1e",
     color: "white",
@@ -88,6 +125,7 @@ function Consulta() {
     fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
     textAlign: "center",
   };
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
@@ -116,6 +154,7 @@ function Consulta() {
       })
       .catch((err) => console.error("Error al obtener clientes:", err));
   }, []);
+
   const inputStyle = {
     display: "block",
     width: "95.5%",
@@ -182,62 +221,65 @@ function Consulta() {
         <p style={{ fontWeight: "bold" }}>No se encontró cliente.</p>
       )}
 
-      {resultado &&
-        typeof resultado === "object" &&
-        (() => {
-          const { estado, diasRestantes, fechaVencimiento } = calcularEstado(
-            resultado.ultimoPago
-          );
-          const colorMap = {
-            verde: "limegreen",
-            amarillo: "gold",
-            rojo: "red",
-          };
+      {resultado && typeof resultado === "object" && (() => {
+        const { estado, diasRestantes, fechaVencimiento } = calcularEstado(
+          resultado.ultimoPago
+        );
+        const colorMap = {
+          verde: "limegreen",
+          amarillo: "gold",
+          rojo: "red",
+        };
 
-          return (
-            <div style={resultadoStyle}>
-              <p>
-                <strong>Nombre:</strong> {resultado.nombre}
-              </p>
-              <p>
-                <strong>Apellido:</strong> {resultado.apellido}
-              </p>
-              <p>
-                <strong>RUT:</strong> {resultado.rut}
-              </p>
-              <p>
-                <strong>Correo:</strong> {resultado.correo}
-              </p>
-              <p>
-                <strong>Último pago:</strong> {resultado.ultimoPago}
-              </p>
+        return (
+          <div style={resultadoStyle}>
+            <p><strong>Nombre:</strong> {resultado.nombre}</p>
+            <p><strong>Apellido:</strong> {resultado.apellido}</p>
+            <p><strong>RUT:</strong> {resultado.rut}</p>
+            <p><strong>Correo:</strong> {resultado.correo}</p>
+            <p><strong>Último pago:</strong> {resultado.ultimoPago}</p>
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              marginTop: "0.5rem",
+            }}>
+              <strong>Estado:</strong>
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                  marginTop: "0.5rem",
+                  width: "20px",
+                  height: "20px",
+                  backgroundColor: colorMap[estado],
+                  borderRadius: "4px",
+                  border: "1px solid #999",
                 }}
-              >
-                <strong>Estado:</strong>
-                <div
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    backgroundColor: colorMap[estado],
-                    borderRadius: "4px",
-                    border: "1px solid #999",
-                  }}
-                />
-                <span>{diasRestantes} días restantes</span>
-              </div>
-              <p style={{ marginTop: "0.5rem" }}>
-                <strong>Vence el:</strong> {fechaVencimiento}
-              </p>
+              />
+              <span>{diasRestantes} días restantes</span>
             </div>
-          );
-        })()}
+            <p style={{ marginTop: "0.5rem" }}>
+              <strong>Vence el:</strong> {fechaVencimiento}
+            </p>
+
+            {/* NUEVA SECCIÓN PARA ACTUALIZAR */}
+            <div style={{ marginTop: "1rem" }}>
+              <label><strong>Actualizar fecha de pago:</strong></label>
+              <input
+                type="date"
+                value={nuevaFecha}
+                onChange={(e) => setNuevaFecha(e.target.value)}
+                style={{ ...inputStyle, marginTop: "0.5rem" }}
+              />
+              <button
+                onClick={actualizarFecha}
+                style={buttonStyle}
+              >
+                Guardar nueva fecha
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
