@@ -9,7 +9,6 @@ function Login({ setTipoUsuario, setUsuario }) {
 
   const navigate = useNavigate();
 
-  // ✅ CAMBIO: función para formatear RUT mientras se escribe
   function formatearRut(value) {
     let valor = value.replace(/[^0-9kK]/g, "").toUpperCase();
     if (valor.length === 0) return "";
@@ -23,12 +22,11 @@ function Login({ setTipoUsuario, setUsuario }) {
     e.preventDefault();
 
     try {
-      // ✅ CAMBIO: enviar el RUT ya formateado con guion
       const res = await fetch("http://localhost:3000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rut: username, // ✅ usar el username ya formateado
+          rut: username,
           password,
         }),
       });
@@ -70,7 +68,7 @@ function Login({ setTipoUsuario, setUsuario }) {
             type="text"
             placeholder="RUT"
             value={username}
-            onChange={(e) => setUsername(formatearRut(e.target.value))} // ✅ CAMBIO
+            onChange={(e) => setUsername(formatearRut(e.target.value))}
             required
             style={styles.input}
           />

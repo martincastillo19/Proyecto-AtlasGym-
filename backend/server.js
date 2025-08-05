@@ -246,8 +246,8 @@ app.put("/clientes/actualizar", (req, res) => {
           clienteActualizado.rut,
           clienteActualizado.correo,
           contrasena,
-          fechaultimopago,
-          fechavencimiento,
+          clienteActualizado.ultimoPago,
+          clienteActualizado.fechavencimiento,
         ].join("|");
       }
       return linea;
@@ -375,12 +375,12 @@ app.get("/inventario", (req, res) => {
 
 // Agregar producto
 app.post("/inventario", (req, res) => {
-  const { nombre, cantidad, descripcion } = req.body;
+  const { nombre, cantidad, tipo } = req.body;
   if (!nombre || !cantidad) {
     return res.status(400).send("Faltan campos.");
   }
 
-  const linea = `${nombre}|${cantidad}|${descripcion || ""}\n`;
+  const linea = `${nombre}|${cantidad}|${tipo || ""}\n`;
 
   fs.appendFile(INVENTARIO_PATH, linea, (err) => {
     if (err) return res.status(500).send("Error al guardar producto.");
@@ -411,7 +411,7 @@ app.post("/inventario/eliminar", (req, res) => {
 
 // Actualizar producto (por nombre original)
 app.put("/inventario/actualizar", (req, res) => {
-  const { nombreOriginal, nombre, cantidad, descripcion } = req.body;
+  const { nombreOriginal, nombre, cantidad, tipo } = req.body;
   if (!nombreOriginal || !nombre || !cantidad) {
     return res.status(400).send("Faltan campos.");
   }
@@ -427,7 +427,7 @@ app.put("/inventario/actualizar", (req, res) => {
         const [n] = linea.split("|");
         if (n === nombreOriginal) {
           encontrado = true;
-          return `${nombre}|${cantidad}|${descripcion || ""}`;
+          return `${nombre}|${cantidad}|${tipo || ""}`;
         }
         return linea;
       });

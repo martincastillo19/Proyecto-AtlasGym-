@@ -41,7 +41,7 @@ function AdministracionEjercicios() {
   const abrirModal = (ejercicio) => {
     setEjercicioSeleccionado({
       ...ejercicio,
-      nombreOriginal: ejercicio.nombre, // ← esto es clave
+      nombreOriginal: ejercicio.nombre,
       nuevoArchivo: null,
     });
     setMostrarModal(true);

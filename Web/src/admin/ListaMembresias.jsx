@@ -9,6 +9,7 @@ function ListaMembresia() {
   const [clienteEliminar, setClienteEliminar] = useState(null);
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [formEditar, setFormEditar] = useState(null);
+  const [mesesPago, setMesesPago] = useState(0);
 
   const colorEstado = {
     verde: "#28a745",
@@ -74,6 +75,23 @@ function ListaMembresia() {
     setFormEditar((prev) => ({ ...prev, [campo]: valor }));
   };
 
+  // Formatea fecha a dd/mm/aa
+  const formatearFecha = (fecha) => {
+    const d = String(fecha.getDate()).padStart(2, "0");
+    const m = String(fecha.getMonth() + 1).padStart(2, "0");
+    const a = String(fecha.getFullYear()).slice(-2);
+    return `${d}/${m}/${a}`;
+  };
+
+  // Suma n meses (30 días por mes) a una fecha
+  const sumarMeses = (fecha, meses) => {
+    const fechaNueva = new Date(fecha);
+    fechaNueva.setDate(fechaNueva.getDate() + meses * 30);
+    return fechaNueva;
+  };
+
+  // Función que guarda los cambios hechos en el formulario de edición,
+  // y si mesesPago > 0 actualiza las fechas ultimoPago y fechavencimiento
   const guardarCambios = () => {
     if (!formEditar) return;
 
@@ -94,7 +112,7 @@ function ListaMembresia() {
     }
 
     if (!esCorreoValido(correoNuevo)) {
-      alert("El correo no tiene un formato válido.");
+      alert("El correo no t iene un formato válido.");
       return;
     }
 
@@ -107,11 +125,35 @@ function ListaMembresia() {
       return;
     }
 
+    // Si mesesPago es mayor a 0, actualizamos fechas
+    let datosAEnviar = { ...formEditar };
+
+    if (mesesPago > 0) {
+      const { diasRestantes } = calcularEstado(formEditar.ultimoPago);
+      if (diasRestantes == 0) {
+        let base = new Date();
+        const nuevaFechaPago = sumarMeses(base, mesesPago - 1);
+        const nuevaFechaVencimiento = sumarMeses(nuevaFechaPago, mesesPago);
+
+        datosAEnviar.ultimoPago = formatearFecha(nuevaFechaPago);
+        datosAEnviar.fechavencimiento = formatearFecha(nuevaFechaVencimiento);
+      } else {
+        const [dia, mes, anio] = formEditar.ultimoPago.split("/").map(Number);
+        const fechaUltimoPago = new Date(2000 + anio, mes - 1, dia);
+
+        const nuevaFechaPago = sumarMeses(fechaUltimoPago, mesesPago);
+        const nuevaFechaVencimiento = sumarMeses(nuevaFechaPago, mesesPago);
+
+        datosAEnviar.ultimoPago = formatearFecha(nuevaFechaPago);
+        datosAEnviar.fechavencimiento = formatearFecha(nuevaFechaVencimiento);
+      }
+    }
+
     fetch("http://localhost:3000/clientes/actualizar", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        ...formEditar,
+        ...datosAEnviar,
         correoOriginal: clienteSeleccionado.correo,
       }),
     })
@@ -125,10 +167,16 @@ function ListaMembresia() {
       })
       .then(() => {
         setMostrarModalEditar(false);
+        setMesesPago(0);
         setClientes((prev) =>
           prev.map((c) =>
-            c.correo === clienteSeleccionado.correo ? formEditar : c
+            c.correo === clienteSeleccionado.correo ? datosAEnviar : c
           )
+        );
+        alert(
+          mesesPago > 0
+            ? `Pago actualizado por ${mesesPago} mes(es).`
+            : "Cliente actualizado correctamente."
         );
       })
       .catch((err) => {
@@ -137,6 +185,7 @@ function ListaMembresia() {
       });
   };
 
+  // Función para eliminar cliente
   const confirmarEliminar = () => {
     if (!clienteEliminar) return;
 
@@ -160,6 +209,7 @@ function ListaMembresia() {
       });
   };
 
+  // Filtra clientes según texto y estado vencido
   const clientesFiltrados = clientes.filter((c) => {
     const coincideTexto = [c.nombre, c.apellido, c.rut, c.correo].some(
       (campo) => campo.toLowerCase().includes(filtro.toLowerCase())
@@ -176,6 +226,9 @@ function ListaMembresia() {
     document.body.style.overflow = "hidden";
     return () => (document.body.style.overflow = "auto");
   }, []);
+
+  const incrementarMeses = () => setMesesPago((m) => Math.min(m + 1, 12));
+  const decrementarMeses = () => setMesesPago((m) => Math.max(m - 1, 0));
 
   return (
     <div style={estilos.contenedor}>
@@ -242,16 +295,58 @@ function ListaMembresia() {
               onClick={(e) => e.stopPropagation()}
             >
               <h3>Editar Cliente</h3>
-              {["nombre", "apellido", "rut", "correo", "ultimoPago"].map(
-                (campo) => (
-                  <CampoModal
-                    key={campo}
-                    label={campo.charAt(0).toUpperCase() + campo.slice(1)}
-                    value={formEditar[campo]}
-                    onChange={(e) => handleChangeEditar(campo, e.target.value)}
-                  />
-                )
-              )}
+              {["nombre", "apellido", "rut", "correo"].map((campo) => (
+                <CampoModal
+                  key={campo}
+                  label={campo.charAt(0).toUpperCase() + campo.slice(1)}
+                  value={formEditar[campo]}
+                  onChange={(e) => handleChangeEditar(campo, e.target.value)}
+                />
+              ))}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  marginTop: "0.5rem",
+                  marginBottom: "1rem",
+                  gap: "0.5rem",
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <button
+                    onClick={decrementarMeses}
+                    style={estilos.boton("#444")}
+                    disabled={mesesPago === 0}
+                    type="button"
+                  >
+                    -
+                  </button>
+                  <span>
+                    Pagar meses: <strong>{mesesPago}</strong>
+                  </span>
+                  <button
+                    onClick={incrementarMeses}
+                    style={estilos.boton("#28a745")}
+                    type="button"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <small style={{ color: "lightgray" }}>
+                  Al guardar, se sumarán {mesesPago} mes(es) a la fecha de
+                  último pago y vencimiento.
+                </small>
+              </div>
+
               <div style={{ marginTop: "1rem", display: "flex", gap: "1rem" }}>
                 <button
                   onClick={guardarCambios}
