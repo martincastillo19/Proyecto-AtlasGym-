@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// --------------------- LOGIN ---------------------
+// -- RUTA LOGIN --
 app.post("/login", (req, res) => {
   const { rut, password } = req.body;
 
@@ -72,7 +72,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// --- RUTAS CLIENTES ---
+// -- RUTAS CLIENTES --
 
 // Obtener clientes
 app.get("/clientes", (req, res) => {
@@ -264,36 +264,7 @@ app.put("/clientes/actualizar", (req, res) => {
   });
 });
 
-// --- RUTA ADMINISTRADOR ---
-app.post("/api/registrar", (req, res) => {
-  const nuevoUsuario = req.body;
-
-  if (!nuevoUsuario.username || !nuevoUsuario.password || !nuevoUsuario.rol) {
-    return res.status(400).json({ message: "Datos incompletos" });
-  }
-
-  fs.readFile(USUARIOS_PATH, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ message: "Error leyendo archivo" });
-
-    const usuarios = data
-      .split("\n")
-      .filter((linea) => linea.trim() !== "")
-      .map((linea) => JSON.parse(linea));
-
-    const existe = usuarios.find((u) => u.username === nuevoUsuario.username);
-    if (existe) {
-      return res.status(409).json({ message: "Usuario ya existe" });
-    }
-
-    fs.appendFile(USUARIOS_PATH, JSON.stringify(nuevoUsuario) + "\n", (err) => {
-      if (err)
-        return res.status(500).json({ message: "Error al guardar el usuario" });
-      res.status(201).json({ message: "Usuario registrado" });
-    });
-  });
-});
-
-// --- RUTAS EJERCICIOS ---
+// -- RUTAS EJERCICIOS --
 
 // Obtener ejercicios
 app.get("/ejercicios", (req, res) => {
@@ -392,7 +363,7 @@ app.put("/ejercicios/actualizar", upload.single("archivo"), (req, res) => {
   });
 });
 
-// --- RUTAS INVENTARIO ---
+// -- RUTAS INVENTARIO --
 
 // Obtener inventario
 app.get("/inventario", (req, res) => {
