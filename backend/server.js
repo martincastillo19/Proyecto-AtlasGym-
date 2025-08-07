@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// --------------------- LOGIN ---------------------
+// -- RUTA LOGIN --
 app.post("/login", (req, res) => {
   const { rut, password } = req.body;
 
@@ -70,7 +70,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// --- RUTAS CLIENTES ---
+// -- RUTAS CLIENTES --
 
 // Obtener clientes
 app.get("/clientes", (req, res) => {
@@ -240,8 +240,8 @@ app.put("/clientes/actualizar", (req, res) => {
           clienteActualizado.rut,
           clienteActualizado.correo,
           contrasena,
-          fechaultimopago,
-          fechavencimiento,
+          clienteActualizado.ultimoPago,
+          clienteActualizado.fechavencimiento,
         ].join("|");
       }
       return linea;
@@ -258,36 +258,7 @@ app.put("/clientes/actualizar", (req, res) => {
   });
 });
 
-// --- RUTA ADMINISTRADOR ---
-app.post("/api/registrar", (req, res) => {
-  const nuevoUsuario = req.body;
-
-  if (!nuevoUsuario.username || !nuevoUsuario.password || !nuevoUsuario.rol) {
-    return res.status(400).json({ message: "Datos incompletos" });
-  }
-
-  fs.readFile(USUARIOS_PATH, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ message: "Error leyendo archivo" });
-
-    const usuarios = data
-      .split("\n")
-      .filter((linea) => linea.trim() !== "")
-      .map((linea) => JSON.parse(linea));
-
-    const existe = usuarios.find((u) => u.username === nuevoUsuario.username);
-    if (existe) {
-      return res.status(409).json({ message: "Usuario ya existe" });
-    }
-
-    fs.appendFile(USUARIOS_PATH, JSON.stringify(nuevoUsuario) + "\n", (err) => {
-      if (err)
-        return res.status(500).json({ message: "Error al guardar el usuario" });
-      res.status(201).json({ message: "Usuario registrado" });
-    });
-  });
-});
-
-// --- RUTAS EJERCICIOS ---
+// -- RUTAS EJERCICIOS --
 
 app.get("/ejercicios", (req, res) => {
   fs.readFile(EJERCICIOS_PATH, "utf8", (err, data) => {
@@ -364,8 +335,7 @@ app.put("/ejercicios/actualizar", upload.single("archivo"), (req, res) => {
   });
 });
 
-// --- RUTAS INVENTARIO ---
-// (El resto igual a tu código...)
+// -- RUTAS INVENTARIO --
 
 app.get("/inventario", (req, res) => {
   fs.readFile(INVENTARIO_PATH, "utf8", (err, data) => {
@@ -374,11 +344,12 @@ app.get("/inventario", (req, res) => {
   });
 });
 app.post("/inventario", (req, res) => {
-  const { nombre, cantidad, descripcion } = req.body;
+  const { nombre, cantidad, tipo } = req.body;
   if (!nombre || !cantidad) {
     return res.status(400).send("Faltan campos.");
   }
-  const linea = `${nombre}|${cantidad}|${descripcion || ""}\n`;
+
+  const linea = `${nombre}|${cantidad}|${tipo || ""}\n`;
   fs.appendFile(INVENTARIO_PATH, linea, (err) => {
     if (err) return res.status(500).send("Error al guardar producto.");
     res.send("Producto agregado correctamente.");
@@ -402,7 +373,7 @@ app.post("/inventario/eliminar", (req, res) => {
   });
 });
 app.put("/inventario/actualizar", (req, res) => {
-  const { nombreOriginal, nombre, cantidad, descripcion } = req.body;
+  const { nombreOriginal, nombre, cantidad, tipo } = req.body;
   if (!nombreOriginal || !nombre || !cantidad) {
     return res.status(400).send("Faltan campos.");
   }
@@ -416,7 +387,7 @@ app.put("/inventario/actualizar", (req, res) => {
         const [n] = linea.split("|");
         if (n === nombreOriginal) {
           encontrado = true;
-          return `${nombre}|${cantidad}|${descripcion || ""}`;
+          return `${nombre}|${cantidad}|${tipo || ""}`;
         }
         return linea;
       });

@@ -80,7 +80,7 @@ function Inventario() {
     fetch("http://localhost:3000/inventario", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, cantidad, descripcion: tipo }),
+      body: JSON.stringify({ nombre, cantidad, tipo: tipo }),
     })
       .then((res) => res.text())
       .then(() => {
