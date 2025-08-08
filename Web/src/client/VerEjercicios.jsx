@@ -57,7 +57,7 @@ function VerEjercicios() {
     return () => window.removeEventListener("keydown", handleKey);
   }, []);
 
-  // Carga los ejercicios cuando el componente monta
+  // Carga los ejercicios
   useEffect(() => {
     document.body.style.overflow = "hidden";
     cargarEjercicios();
@@ -95,7 +95,7 @@ function VerEjercicios() {
 
         {/* Campo de búsqueda */}
         <div>
-          <p>Búsqueda por nombre o zona:</p>
+          <p>Búsqueda por nombre:</p>
           <input
             type="text"
             placeholder='ej: "sentadillas" o "piernas"'
